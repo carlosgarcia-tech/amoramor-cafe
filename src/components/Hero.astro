@@ -1,0 +1,401 @@
+---
+/* Banner principal: paleta y poemas oficiales. Carrusel "vitrina": se muestra
+   UN solo producto centrado; al cambiar, el actual se desintegra en partículas
+   de píxeles (canvas) y el siguiente se materializa en su lugar. */
+---
+
+<section id="top" class="bg-[#FFFDF9] relative overflow-hidden">
+  <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+    <div
+      class="absolute -top-24 -right-24 size-96 rounded-full bg-[#DC2626]/10 blur-3xl"
+    >
+    </div>
+    <div
+      class="absolute top-40 -left-32 size-72 rounded-full bg-[#D97706]/10 blur-3xl"
+    >
+    </div>
+  </div>
+
+  <div
+    class="mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-32 md:pb-24 grid items-center gap-10 md:grid-cols-2"
+  >
+    <div>
+      <!-- 1 · Saludo manuscrito (Caveat) -->
+      <p
+        class="hero-subir font-cursive -rotate-2 text-3xl text-[#D97706] sm:text-4xl"
+        style="animation-delay: 0ms"
+      >
+        ~ Bienvenidos a ~
+      </p>
+
+      <!-- 2 · Título: "Amor Amor Café" completo con la fuente de marca (estilo logo) -->
+      <h1
+        class="hero-subir font-brand mt-1 leading-[0.95] font-normal"
+        style="animation-delay: 120ms"
+      >
+        <span
+          class="block text-6xl text-[#DC2626] sm:text-7xl md:text-8xl"
+        >
+          Amor Amor
+        </span>
+        <span
+          class="relative mt-1 ml-10 inline-block text-5xl text-[#451A03] sm:text-6xl md:ml-20 md:text-7xl"
+        >
+          Café
+          <svg
+            class="absolute -bottom-2 left-0 h-3 w-full text-[#DC2626]/35"
+            viewBox="0 0 200 12"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path d="M3 8 C 25 1, 45 1, 66 7 S 108 13, 130 6 S 172 1, 197 7"></path>
+          </svg>
+        </span>
+      </h1>
+
+      <!-- 3 · Lema manuscrito (Caveat), el mismo del logo -->
+      <p
+        class="hero-subir font-cursive mt-8 text-3xl leading-tight text-[#D97706] sm:text-4xl"
+        style="animation-delay: 240ms"
+      >
+        La esencia del café,<br />con una gota de lo nuestro.
+      </p>
+
+      <!-- 4 · Frase poética (Playfair itálica) en cita lateral, más sobria que la píldora -->
+      <blockquote
+        class="hero-subir font-serif mt-6 max-w-md border-l-4 border-[#DC2626]/30 pl-4 text-base leading-relaxed text-[#451A03]/70 italic md:text-lg"
+        style="animation-delay: 360ms"
+      >
+        <i class="fa-solid fa-quote-left mr-1 text-xs text-[#DC2626]/60"></i>
+        Tomemos un café y dejemos que el tiempo entienda que el amor no lleva
+        prisa.
+      </blockquote>
+
+      <!-- 5 · Botones: Montserrat en mayúsculas espaciadas -->
+      <div
+        class="hero-subir mt-9 flex flex-wrap gap-3"
+        style="animation-delay: 480ms"
+      >
+        <a
+          href="#parallax-experience"
+          class="font-mont rounded-full bg-[#DC2626] px-7 py-3.5 text-sm font-bold tracking-[0.15em] text-white uppercase shadow-lg shadow-[#DC2626]/25 transition-all hover:-translate-y-0.5 hover:bg-[#991B1B]"
+        >
+          Ver la vitrina <i class="fa-solid fa-heart ml-1.5"></i>
+        </a>
+        <a
+          href="#menu"
+          class="font-mont rounded-full border-2 border-[#DC2626]/25 px-7 py-3.5 text-sm font-bold tracking-[0.15em] text-[#451A03] uppercase transition-all hover:-translate-y-0.5 hover:border-[#DC2626] hover:text-[#DC2626]"
+        >
+          Menú
+        </a>
+      </div>
+    </div>
+
+    <div id="hero-carousel" hidden data-hero-carousel>
+      <div
+        class="hero-float animate-[flotar_5s_ease-in-out_infinite] [filter:drop-shadow(0_18px_24px_rgba(69,26,3,0.25))]"
+      >
+        <div
+          class="relative mx-auto h-[450px] w-full max-w-lg md:h-[600px]"
+          data-hero-track
+        >
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- is:global: las <img> y el <canvas> se crean con JS y los estilos "scoped" de Astro no los alcanzan -->
+<style is:global>
+  @keyframes flotar {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-2deg);
+    }
+    50% {
+      transform: translateY(-14px) rotate(2deg);
+    }
+  }
+
+  /* Entrada escalonada del texto */
+  @keyframes hero-subir {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .hero-subir {
+    animation: hero-subir 800ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .hero-slide {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    opacity: 0;
+    transform: scale(0.85);
+    filter: blur(10px) brightness(1.4);
+    transition:
+      opacity 900ms ease-out,
+      transform 1100ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      filter 900ms ease-out;
+    pointer-events: none;
+    user-select: none;
+  }
+  .hero-slide.is-activa {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+  }
+  /* Ocultar al instante (justo cuando el canvas toma su lugar) */
+  .hero-slide.sin-transicion {
+    transition: none;
+  }
+  .hero-particulas {
+    position: absolute;
+    z-index: 20;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-float,
+    .hero-subir {
+      animation: none;
+    }
+    .hero-slide {
+      transform: none;
+      filter: none;
+      transition: opacity 300ms linear;
+    }
+  }
+</style>
+
+<script>
+  import { supabase } from "../lib/supabase.js";
+
+  const root = document.querySelector<HTMLElement>("[data-hero-carousel]");
+  const track = document.querySelector<HTMLElement>("[data-hero-track]");
+
+  if (root && track) {
+    const pista: HTMLElement = track;
+    const slides: HTMLImageElement[] = [];
+    let indiceActual = 0;
+    let animando = false;
+
+    const INTERVALO_MS = 5000; // tiempo entre cambios
+    const BARRIDO_MS = 1000; // cuánto tarda en "arrancarse" toda la imagen (izq → der)
+    const VIDA_MS = 1000; // vida de cada partícula
+    const ENTRADA_MS = 650; // cuándo empieza a materializarse el siguiente
+    const MAX_PARTICULAS = 14000;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const canvas = document.createElement("canvas");
+    canvas.className = "hero-particulas";
+    pista.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+
+    interface Particula {
+      x: number;
+      y: number;
+      tam: number;
+      color: string;
+      retraso: number;
+      vx: number;
+      vy: number;
+    }
+
+    /* Rompe la imagen en partículas y las dispersa. Devuelve false si el navegador
+       no deja leer los píxeles (imagen sin CORS) para usar el fundido de respaldo. */
+    function desintegrar(img: HTMLImageElement, alTerminar: () => void): boolean {
+      if (!ctx || !img.naturalWidth) return false;
+
+      const W = pista.clientWidth;
+      const H = pista.clientHeight;
+      const padX = W * 0.3;
+      const padY = H * 0.25;
+      const escala = Math.min(W / img.naturalWidth, H / img.naturalHeight);
+      const dw = Math.max(1, Math.round(img.naturalWidth * escala));
+      const dh = Math.max(1, Math.round(img.naturalHeight * escala));
+      const dx = padX + (W - dw) / 2;
+      const dy = padY + (H - dh) / 2;
+
+      const off = document.createElement("canvas");
+      off.width = dw;
+      off.height = dh;
+      const octx = off.getContext("2d", { willReadFrequently: true });
+      if (!octx) return false;
+      octx.drawImage(img, 0, 0, dw, dh);
+
+      let datos: Uint8ClampedArray;
+      try {
+        datos = octx.getImageData(0, 0, dw, dh).data;
+      } catch {
+        return false; // canvas "tainted" por CORS
+      }
+
+      let opacos = 0;
+      for (let i = 3; i < datos.length; i += 4) if (datos[i] > 40) opacos++;
+      if (!opacos) return false;
+      const paso = Math.max(2, Math.ceil(Math.sqrt(opacos / MAX_PARTICULAS)));
+
+      const particulas: Particula[] = [];
+      for (let y = 0; y < dh; y += paso) {
+        for (let x = 0; x < dw; x += paso) {
+          const cx = Math.min(dw - 1, x + (paso >> 1));
+          const cy = Math.min(dh - 1, y + (paso >> 1));
+          const i = (cy * dw + cx) * 4;
+          if (datos[i + 3] < 40) continue;
+
+          // dirección: sube y se va con el "viento" hacia la derecha
+          const ang = -Math.PI / 4 + (Math.random() - 0.5) * 2.2;
+          const fuerza = 50 + Math.random() * 170;
+          particulas.push({
+            x: dx + x,
+            y: dy + y,
+            tam: paso,
+            color: `rgb(${datos[i]},${datos[i + 1]},${datos[i + 2]})`,
+            retraso: ((x / dw) * 0.65 + Math.random() * 0.35) * BARRIDO_MS,
+            vx: Math.cos(ang) * fuerza + 60,
+            vy: Math.sin(ang) * fuerza - 20,
+          });
+        }
+      }
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const CW = W + padX * 2;
+      const CH = H + padY * 2;
+      canvas.width = Math.round(CW * dpr);
+      canvas.height = Math.round(CH * dpr);
+      canvas.style.width = `${CW}px`;
+      canvas.style.height = `${CH}px`;
+      canvas.style.left = `${-padX}px`;
+      canvas.style.top = `${-padY}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const inicio = performance.now();
+      const total = BARRIDO_MS + VIDA_MS;
+
+      function dibujar(ahora: number) {
+        const c = ctx as CanvasRenderingContext2D;
+        const t0 = ahora - inicio;
+        c.clearRect(0, 0, CW, CH);
+        for (const p of particulas) {
+          const t = (t0 - p.retraso) / VIDA_MS;
+          if (t >= 1) continue;
+          if (t <= 0) {
+            c.globalAlpha = 1;
+            c.fillStyle = p.color;
+            c.fillRect(p.x, p.y, p.tam, p.tam);
+            continue;
+          }
+          const mov = Math.pow(t, 1.4);
+          const tam = p.tam * (1 - 0.6 * t);
+          c.globalAlpha = 1 - Math.pow(t, 1.3);
+          c.fillStyle = p.color;
+          c.fillRect(p.x + p.vx * mov, p.y + p.vy * mov, tam, tam);
+        }
+        c.globalAlpha = 1;
+        if (t0 < total) requestAnimationFrame(dibujar);
+        else {
+          c.clearRect(0, 0, CW, CH);
+          alTerminar();
+        }
+      }
+
+      dibujar(inicio); // primer cuadro ya, antes de ocultar la <img>: sin parpadeo
+      requestAnimationFrame(dibujar);
+      return true;
+    }
+
+    function avanzar() {
+      if (slides.length <= 1 || animando || document.hidden) return;
+      animando = true;
+
+      const actual = slides[indiceActual];
+      const siguienteIndice = (indiceActual + 1) % slides.length;
+      const siguiente = slides[siguienteIndice];
+      indiceActual = siguienteIndice;
+
+      const mostrarSiguiente = () => {
+        siguiente.classList.remove("sin-transicion");
+        void siguiente.offsetWidth;
+        siguiente.classList.add("is-activa");
+      };
+
+      const usaParticulas =
+        !reduceMotion.matches && desintegrar(actual, () => (animando = false));
+
+      if (usaParticulas) {
+        // el canvas ya pintó el producto: ocultamos la imagen real al instante
+        actual.classList.add("sin-transicion");
+        actual.classList.remove("is-activa");
+        window.setTimeout(mostrarSiguiente, ENTRADA_MS);
+      } else {
+        // respaldo: fundido simple
+        actual.classList.remove("is-activa");
+        mostrarSiguiente();
+        window.setTimeout(() => (animando = false), 900);
+      }
+    }
+
+    async function initCarousel() {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("name, image_url")
+          .eq("is_available", true)
+          .not("image_url", "is", null)
+          .limit(8);
+
+        if (error) throw error;
+
+        const productos = (data as { name: string; image_url: string }[]) ?? [];
+        const urls = [...new Set(productos.map((p) => p.image_url))];
+
+        urls.forEach((url, i) => {
+          const img = document.createElement("img");
+          img.className = `hero-slide${i === 0 ? " is-activa" : ""}`;
+          img.draggable = false;
+          img.alt =
+            productos.find((p) => p.image_url === url)?.name || "Producto";
+
+          // CORS permite leer los píxeles para la desintegración. Si el servidor
+          // no lo soporta, reintentamos sin CORS (se usará el fundido de respaldo).
+          img.crossOrigin = "anonymous";
+          img.addEventListener(
+            "error",
+            () => {
+              img.removeAttribute("crossorigin");
+              img.src = url;
+            },
+            { once: true },
+          );
+          img.src = url;
+
+          pista.appendChild(img);
+          slides.push(img);
+        });
+
+        if (slides.length) {
+          root?.removeAttribute("hidden");
+          if (slides.length > 1) window.setInterval(avanzar, INTERVALO_MS);
+        }
+      } catch (err) {
+        console.error("Error cargando el carrusel:", err);
+      }
+    }
+
+    initCarousel();
+  }
+</script>

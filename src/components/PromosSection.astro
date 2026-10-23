@@ -1,0 +1,83 @@
+---
+/*
+ Publicaciones y promos (tabla `posts`): títulos, contenido,
+ promo_code copiable, discount_badge dorado y vigencia.
+*/
+---
+
+<section id="promos" class="bg-brand-cream py-20">
+	<div class="mx-auto max-w-6xl px-6">
+		<h2 class="font-serif text-center text-3xl font-extrabold text-brand-chocolate sm:text-4xl">
+			Promos y <span class="text-brand-red">cupones</span>
+		</h2>
+
+		<div id="promos-grid" class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+			<p class="col-span-full text-center font-sans text-brand-chocolate/60">Trayendo los cupones…</p>
+		</div>
+	</div>
+</section>
+
+<script>
+	import { supabase } from '../lib/supabase.js';
+
+	type Post = {
+		id: string;
+		title: string;
+		slug: string;
+		content: string;
+		image_url: string | null;
+		promo_code: string | null;
+		discount_badge: string | null;
+		valid_until: string | null;
+	};
+
+	const promosEl = document.querySelector('#promos-grid')!;
+
+	function tarjetaPost(p: Post): string {
+		const vigente = p.valid_until
+			? `Vigente hasta ${new Date(p.valid_until + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}`
+			: null;
+		return `
+			<article class="flex flex-col rounded-3xl border-2 border-brand-gold bg-brand-rose/25 p-5">
+				${p.image_url ? `<img src="${p.image_url}" alt="${p.title}" class="h-40 w-full rounded-2xl object-cover mb-4" loading="lazy" />` : ''}
+				<div class="flex items-start justify-between gap-2">
+					<h3 class="font-serif text-lg font-bold text-brand-chocolate">${p.title}</h3>
+					${p.discount_badge ? `<span class="shrink-0 rounded-full bg-brand-gold/20 text-brand-caramel text-xs font-extrabold px-2.5 py-1">${p.discount_badge}</span>` : ''}
+				</div>
+				<p class="mt-2 text-sm text-brand-chocolate/70">${p.content}</p>
+				<div class="mt-auto pt-4">
+					${p.promo_code ? `
+					<code class="inline-block rounded-lg bg-brand-chocolate text-brand-gold px-3 py-1.5 tracking-widest">${p.promo_code}</code>
+					<button type="button" class="promo-copy ml-2 rounded-full bg-brand-red px-4 py-1.5 text-sm font-bold text-white hover:bg-brand-darkRed transition-colors" data-codigo="${p.promo_code}">
+						<i class="fa-solid fa-copy mr-1"></i>Copiar
+					</button>` : ''}
+					${vigente ? `<p class="text-xs text-brand-chocolate/50 mt-3">${vigente}</p>` : ''}
+				</div>
+			</article>
+		`;
+	}
+
+	promosEl.addEventListener('click', async (e) => {
+		const btn = (e.target as HTMLElement).closest('[data-codigo]') as HTMLElement | null;
+		if (!btn) return;
+		await navigator.clipboard.writeText(btn.dataset.codigo!);
+		btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i>¡Copiado!';
+		setTimeout(() => (btn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i>Copiar'), 2000);
+	});
+
+	try {
+		const { data, error } = await supabase
+			.from('posts')
+			.select('id, title, slug, content, image_url, promo_code, discount_badge, valid_until')
+			.order('created_at', { ascending: false });
+
+		if (error) throw error;
+		const posts = (data as Post[]) ?? [];
+		promosEl.innerHTML = posts.length
+			? posts.map(tarjetaPost).join('')
+			: '<p class="col-span-full text-center text-brand-chocolate/60">Por ahora no hay promos, pero los waffles abrazan igual.</p>';
+	} catch (err) {
+		promosEl.innerHTML = '<p class="col-span-full text-center text-brand-chocolate/60">No pude cargar las promos — revisa las claves de Supabase.</p>';
+		console.error('[posts]', err);
+	}
+</script>

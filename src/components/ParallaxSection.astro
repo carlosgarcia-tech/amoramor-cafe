@@ -1,0 +1,223 @@
+---
+/* Showroom 2.5D del Bubble Waffle — algoritmo lerp/smoothstep del spec;
+   el producto flota, se inclina y escala con el scroll. */
+import waffleImage from "../assets/bubbleWaffle.png";
+---
+
+<section id="parallax-experience" class="product-section">
+  <div class="stage">
+    <div class="ambient-glow" aria-hidden="true"></div>
+
+    <div
+      class="pointer-events-none absolute top-[10%] left-[6%] z-10 max-w-md md:left-[10%]"
+    >
+      <span
+        class="text-brand-caramel font-cursive block mb-1 text-2xl md:text-3xl"
+      >
+        ~ Versos en cada bocado ~
+      </span>
+      <h2
+        id="productTitle"
+        class="font-serif text-3xl font-extrabold tracking-wide text-white uppercase sm:text-5xl md:text-6xl"
+      >
+        Bubble Waffles<br />
+        <span class="text-brand-gold normal-case">escritos con versos.</span>
+      </h2>
+      <p class="mt-3 max-w-xs text-sm text-white/75 sm:text-base">
+        Cada manta lleva un poema escondido entre las perlas. Crocante por
+        fuera, romántico por dentro.
+      </p>
+    </div>
+
+    <div
+      class="pointer-events-none absolute top-[14%] right-[6%] z-10 hidden max-w-60 text-right md:right-[10%] md:block"
+    >
+      <p class="font-cursive text-xl italic leading-snug text-white/90">
+        "Hay amores que nacen de un suspiro y otros que se hornean burbuja a
+        burbuja."
+      </p>
+      <span
+        class="text-brand-caramel mt-1 block text-xs font-semibold tracking-wider uppercase"
+        >— Amor Amor Café</span
+      >
+    </div>
+
+    <p
+      id="productSubtitle"
+      class="pointer-events-none absolute bottom-[6%] left-0 right-0 z-10 mx-auto w-max max-w-[92vw] text-center text-brand-rose text-xs font-semibold tracking-widest uppercase sm:text-sm"
+    >
+      Kinder Bueno · Helado Cremoso · Hilos de Chocolate
+    </p>
+
+    <div class="product-shadow" id="productShadow" aria-hidden="true"></div>
+
+    <div class="product-wrap" id="productWrap">
+      <img
+        class="product-image"
+        id="productImage"
+        src={waffleImage.src}
+        alt="Bubble Waffle con Helado y Kinder Bueno"
+        draggable="false"
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .product-section {
+    position: relative;
+    height: 220svh;
+    min-height: 1400px;
+    background:
+      radial-gradient(
+        ellipse at 50% 55%,
+        rgba(220, 38, 38, 0.18),
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse at 50% 75%,
+        rgba(217, 119, 6, 0.12),
+        transparent 50%
+      ),
+      #120907;
+  }
+
+  .stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    min-height: 540px;
+    overflow: clip;
+    isolation: isolate;
+  }
+
+  .product-wrap {
+    position: absolute;
+    z-index: 2;
+    top: 55%;
+    left: 50%;
+    width: min(68vw, 480px);
+    height: min(60svh, 560px);
+    transform: translate3d(-50%, -50%, 0);
+    transform-origin: center center;
+    will-change: transform;
+    pointer-events: none;
+  }
+
+  .product-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center 55%;
+    filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.45))
+      drop-shadow(0 0 25px rgba(220, 38, 38, 0.25));
+  }
+
+  .product-shadow {
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    top: 84%;
+    width: min(38vw, 300px);
+    height: clamp(20px, 4.5vh, 45px);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.85);
+    filter: blur(22px);
+    opacity: 0.65;
+    transform: translate3d(-50%, 0, 0) scale(1);
+    will-change: transform, opacity, filter;
+    pointer-events: none;
+  }
+
+  .ambient-glow {
+    position: absolute;
+    z-index: 0;
+    top: 55%;
+    left: 50%;
+    width: 70vmin;
+    height: 70vmin;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgba(220, 38, 38, 0.25) 0%,
+      rgba(120, 20, 20, 0.08) 55%,
+      transparent 75%
+    );
+    filter: blur(40px);
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  (() => {
+    const section = document.getElementById("parallax-experience");
+    const product = document.getElementById("productWrap");
+    const shadow = document.getElementById("productShadow");
+    const title = document.getElementById("productTitle");
+    const subtitle = document.getElementById("productSubtitle");
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let ticking = false;
+
+    const clamp01 = (value) => Math.max(0, Math.min(1, value));
+    const lerp = (start, end, progress) => start + (end - start) * progress;
+    const smoothstep = (value) => value * value * (3 - 2 * value);
+
+    function render() {
+      ticking = false;
+
+      if (reduceMotion.matches) {
+        product.style.transform = "translate3d(-50%, -50%, 0) scale(1)";
+        shadow.style.transform = "translate3d(-50%, 0, 0) scale(1)";
+        shadow.style.opacity = "0.6";
+        return;
+      }
+
+      const rect = section.getBoundingClientRect();
+      const scrollableDistance = section.offsetHeight - window.innerHeight;
+      const rawProgress =
+        scrollableDistance > 0 ? clamp01(-rect.top / scrollableDistance) : 0;
+
+      const p = smoothstep(rawProgress);
+
+      const isMobile = window.matchMedia("(max-width: 650px)").matches;
+
+      const startX = isMobile ? 0 : -22;
+      const endX = isMobile ? 0 : 28;
+      const startY = isMobile ? 18 : 32;
+      const endY = isMobile ? -16 : -38;
+
+      const scale = lerp(0.86, 1.12, p);
+      const rotation = lerp(-5, 5, p);
+      const x = lerp(startX, endX, p);
+      const y = lerp(startY, endY, p);
+
+      product.style.transform = `translate3d(calc(-50% + ${x}px), calc(-50% + ${y}px), 0) scale(${scale}) rotate(${rotation}deg)`;
+
+      const shadowScale = lerp(0.72, 1.12, p);
+      const shadowOpacity = lerp(0.4, 0.75, p);
+      const shadowY = lerp(12, -4, p);
+      shadow.style.transform = `translate3d(-50%, ${shadowY}px, 0) scale(${shadowScale})`;
+      shadow.style.opacity = String(shadowOpacity);
+      shadow.style.filter = `blur(${lerp(26, 18, p)}px)`;
+
+      if (title)
+        title.style.transform = `translate3d(${lerp(-10, 20, p)}px, ${lerp(12, -18, p)}px, 0)`;
+      if (subtitle)
+        subtitle.style.transform = `translate3d(${lerp(8, -14, p)}px, ${lerp(16, -10, p)}px, 0)`;
+    }
+
+    function requestRender() {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(render);
+      }
+    }
+
+    window.addEventListener("scroll", requestRender, { passive: true });
+    window.addEventListener("resize", requestRender);
+    render();
+  })();
+</script>

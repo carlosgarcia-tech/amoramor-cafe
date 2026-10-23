@@ -1,0 +1,63 @@
+---
+/* Encabezado fijo con el contenedor de logo exacto del spec (§2.4). */
+const links = [
+  { href: "#parallax-experience", label: "La experiencia" },
+  { href: "#menu", label: "Menú" },
+  { href: "#sucursales", label: "Sucursales" },
+];
+---
+
+<header
+  id="navbar"
+  class="fixed inset-x-0 top-0 z-50 border-b border-brand-rose/60 bg-brand-cream/85 backdrop-blur-md"
+>
+  <nav class="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+    <a
+      href="#top"
+      class="flex items-center gap-3 group"
+      aria-label="Amor Amor Café Inicio"
+    >
+      <div
+        class="relative w-12 h-12 flex items-center justify-center overflow-hidden rounded-full bg-brand-warmIvory border border-brand-rose/40 shadow-sm group-hover:scale-105 transition-transform md:w-14 md:h-14"
+      >
+        <img
+          src="/logo.png"
+          alt="Amor Amor Café Logotipo"
+          class="w-full h-full object-contain p-1"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <div
+          class="hidden w-full h-full bg-brand-red text-white items-center justify-center font-bold"
+        >
+          <i class="fa-solid fa-heart text-xl animate-pulse"></i>
+        </div>
+      </div>
+      <div>
+        <span
+          class="font-serif text-2xl font-extrabold tracking-tight text-brand-chocolate block leading-none"
+        >
+          Amor Amor <span class="text-brand-red">Café</span>
+        </span>
+        <span
+          class="hidden sm:font-cursive sm:block text-brand-caramel text-base leading-none -mt-0.5"
+        >
+          La esencia del café, con una gota de lo nuestro
+        </span>
+      </div>
+    </a>
+    <ul class="flex items-center gap-5 font-sans text-sm font-semibold">
+      {
+        links.map((l) => (
+          <li>
+            <a
+              href={l.href}
+              class="text-brand-chocolate/70 hover:text-brand-red transition-colors"
+            >
+              {l.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>
