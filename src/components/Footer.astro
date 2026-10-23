@@ -1,0 +1,49 @@
+---
+/* Pie de página (§3.5): logo + slogan secundario exacto del spec. */
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-brand-chocolate text-brand-cream/90">
+	<div class="mx-auto max-w-6xl px-6 py-14 text-center">
+		<!-- Marca: logo + nombre con la fuente del logo -->
+		<div class="mx-auto flex w-fit flex-col items-center gap-3 sm:flex-row sm:gap-4">
+			<div class="w-16 h-16 flex items-center justify-center overflow-hidden rounded-full bg-brand-warmIvory border border-brand-rose/40 shadow-md">
+				<img
+					src="/logo.png"
+					alt="Amor Amor Café Logotipo"
+					class="w-full h-full object-contain p-1"
+					onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+				/>
+				<div class="hidden w-full h-full bg-brand-red text-white items-center justify-center font-bold">
+					<i class="fa-solid fa-heart text-xl animate-pulse"></i>
+				</div>
+			</div>
+			<span class="font-brand block text-4xl leading-none font-normal text-brand-cream sm:text-5xl">
+				<span class="text-brand-red">Amor Amor</span> Café
+			</span>
+		</div>
+
+		<p class="font-cursive mt-6 text-3xl text-brand-gold">"Donde el café se encuentra con el corazón."</p>
+
+		<!-- Divisor con corazón -->
+		<div class="mx-auto mt-8 flex max-w-xs items-center gap-4" aria-hidden="true">
+			<span class="h-px flex-1 bg-brand-rose/30"></span>
+			<i class="fa-solid fa-heart text-sm text-brand-red"></i>
+			<span class="h-px flex-1 bg-brand-rose/30"></span>
+		</div>
+
+		<nav class="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 font-mont text-xs font-semibold tracking-[0.18em] uppercase">
+			<a href="#parallax-experience" class="hover:text-brand-gold transition-colors">La experiencia</a>
+			<span aria-hidden="true" class="opacity-40">·</span>
+			<a href="#menu" class="hover:text-brand-gold transition-colors">Menú</a>
+			<span aria-hidden="true" class="opacity-40">·</span>
+			<a href="#promos" class="hover:text-brand-gold transition-colors">Promos</a>
+			<span aria-hidden="true" class="opacity-40">·</span>
+			<a href="#sucursales" class="hover:text-brand-gold transition-colors">Sucursales</a>
+		</nav>
+
+		<p class="mt-8 font-sans text-xs opacity-60">
+			© {year} <span class="font-brand text-sm">Amor Amor Café</span>. Hecho con amor.
+		</p>
+	</div>
+</footer>

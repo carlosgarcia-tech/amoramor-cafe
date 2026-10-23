@@ -1,0 +1,74 @@
+---
+// Sucursales (spec §6: tabla `branches` — name, address, schedule, status).
+---
+
+<section id="sucursales" class="bg-brand-warmIvory py-20">
+	<div class="mx-auto max-w-6xl px-6">
+		<h2 class="font-serif text-center text-3xl font-extrabold text-brand-chocolate sm:text-4xl">
+			Ven a <span class="text-brand-red">amarnos</span>
+		</h2>
+		<p class="text-brand-caramel font-cursive mt-1 mb-10 text-center text-2xl">cada sucursal tiene su poema</p>
+		<div id="branches-list" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+			<p class="col-span-full text-center font-sans text-brand-chocolate/60">Buscando sucursales…</p>
+		</div>
+	</div>
+</section>
+
+<script>
+	import { supabase } from '../lib/supabase.js';
+
+	type Branch = {
+		id: string;
+		name: string;
+		address: string;
+		phone: string | null;
+		schedule: string;
+		map_url: string | null;
+		status: string;
+		has_wifi: boolean;
+		is_pet_friendly: boolean;
+	};
+
+	const list = document.querySelector('#branches-list')!;
+
+	function tarjeta(b: Branch): string {
+		const estado = b.status === 'active' ? '● Abierta' : b.status === 'upcoming' ? '● Próximamente' : '● Cerrada';
+		const clases = b.status === 'active'
+			? 'bg-green-100 text-green-700'
+			: b.status === 'upcoming'
+				? 'bg-brand-gold/20 text-brand-caramel'
+				: 'bg-brand-rose/30 text-brand-darkRed';
+		return `
+			<article class="rounded-3xl bg-brand-cream border border-brand-rose/40 p-6 shadow-md">
+				<div class="flex items-center justify-between">
+					<h3 class="font-serif text-xl font-bold text-brand-chocolate">${b.name}</h3>
+					<span class="font-sans text-xs font-bold px-2.5 py-1 rounded-full ${clases}">${estado}</span>
+				</div>
+				<p class="mt-2 text-sm text-brand-chocolate/70"><i class="fa-solid fa-location-dot text-brand-red mr-1"></i>${b.address}</p>
+				${b.phone ? `<p class="font-sans mt-1 text-sm text-brand-chocolate/70"><i class="fa-solid fa-phone text-brand-red mr-1"></i>${b.phone}</p>` : ''}
+				<p class="font-sans mt-1 text-sm font-bold text-brand-chocolate"><i class="fa-regular fa-clock text-brand-caramel mr-1"></i>${b.schedule}</p>
+				<div class="mt-3 flex flex-wrap items-center gap-2 font-sans text-xs font-bold">
+					${b.has_wifi ? `<span class="rounded-full bg-brand-rose/25 text-brand-darkRed px-2.5 py-1"><i class="fa-solid fa-wifi mr-1"></i>WiFi</span>` : ''}
+					${b.is_pet_friendly ? `<span class="rounded-full bg-brand-rose/25 text-brand-darkRed px-2.5 py-1"><i class="fa-solid fa-paw mr-1"></i>Pet Friendly</span>` : ''}
+					${b.map_url ? `<a href="${b.map_url}" target="_blank" rel="noopener" class="text-brand-red hover:text-brand-darkRed transition-colors"><i class="fa-solid fa-map-location-dot mr-1"></i>Ver en el mapa</a>` : ''}
+				</div>
+			</article>
+		`;
+	}
+
+	try {
+		const { data, error } = await supabase
+			.from('branches')
+			.select('id, name, address, phone, schedule, map_url, status, has_wifi, is_pet_friendly')
+			.order('name');
+
+		if (error) throw error;
+		const branches = (data as Branch[]) ?? [];
+		list.innerHTML = branches.length
+			? branches.map(tarjeta).join('')
+			: '<p class="col-span-full text-center text-brand-chocolate/60">Aún no hay sucursales registradas. ♥</p>';
+	} catch (err) {
+		list.innerHTML = '<p class="col-span-full text-center text-brand-chocolate/60">No pude cargar las sucursales — revisa las claves de Supabase.</p>';
+		console.error('[branches]', err);
+	}
+</script>

@@ -1,0 +1,141 @@
+---
+/*
+ Vitrina de productos (tabla `products` + `categories`).
+ Filtrado interactivo por categorías y modal desplegable.
+ description es nullable en el esquema.
+*/
+---
+
+<section id="menu" class="bg-brand-cream py-20">
+	<div class="mx-auto max-w-6xl px-6">
+		<h2 class="font-serif text-center text-3xl font-extrabold text-brand-chocolate sm:text-4xl">
+			El <span class="text-brand-red">menú</span> de la casa
+		</h2>
+		<p class="font-cursive mt-1 mb-10 text-center text-2xl text-brand-caramel">
+			"Cada receta guarda un secreto: una pizca de canela, un toque de dulzura y toda la dedicación de nuestras manos."
+		</p>
+
+		<div id="menu-categories" class="mb-8 hidden flex-wrap justify-center gap-2"></div>
+		<div id="menu-grid" class="grid gap-x-6 gap-y-20 pt-14 sm:grid-cols-2 lg:grid-cols-3">
+			<p class="col-span-full text-center font-sans text-brand-chocolate/60">Cargando los poemas dulces…</p>
+		</div>
+	</div>
+</section>
+
+<dialog id="product-modal" class="rounded-3xl bg-brand-warmIvory p-8 w-[min(480px,92%)] shadow-2xl backdrop:bg-brand-chocolate/60 backdrop:backdrop-blur-sm">
+	<button id="modal-close" aria-label="Cerrar" class="absolute top-2 right-3 text-3xl text-brand-chocolate/50 hover:text-brand-red">×</button>
+	<div id="modal-body" class="font-sans"></div>
+</dialog>
+
+<script>
+	import { supabase } from '../lib/supabase.js';
+
+	type Category = { id: string; name: string; slug: string };
+	type Product = {
+		id: string;
+		category_id: string | null;
+		name: string;
+		description: string | null;
+		price: number;
+		image_url: string | null;
+		is_available: boolean;
+		categories: Category | null;
+	};
+
+	const grid = document.querySelector('#menu-grid')!;
+	const categoriasEl = document.querySelector('#menu-categories')!;
+	const modal = document.querySelector<HTMLDialogElement>('#product-modal')!;
+
+	let productos: Product[] = [];
+
+	function tarjeta(p: Product): string {
+		const imagen = p.image_url
+			? `<img src="${p.image_url}" alt="${p.name}" loading="lazy" draggable="false"
+					class="absolute inset-0 h-full w-full object-contain p-2 drop-shadow-[0_18px_16px_rgba(69,26,3,0.30)] transition-transform duration-500 ease-out group-hover:-rotate-3 group-hover:scale-110" />`
+			: '<i class="fa-solid fa-mug-hot absolute inset-0 grid place-items-center text-7xl text-brand-red"></i>';
+
+		return `
+			<article data-product="${p.id}" class="group relative flex cursor-pointer flex-col rounded-3xl border border-brand-rose/40 bg-brand-warmIvory px-5 pt-0 pb-6 shadow-md transition duration-300 hover:-translate-y-1 hover:shadow-2xl">
+				<!-- El producto es el protagonista: grande, entero (contain) y sobresale de la card -->
+				<div class="relative -mt-14 mb-3 h-72">
+					<div class="absolute bottom-6 left-1/2 size-52 -translate-x-1/2 rounded-full bg-brand-rose/50 transition-all duration-500 group-hover:scale-110 group-hover:bg-brand-rose/80"></div>
+					<div class="absolute bottom-3 left-1/2 h-4 w-36 -translate-x-1/2 rounded-full bg-brand-chocolate/25 blur-md transition-all duration-500 group-hover:w-28 group-hover:opacity-70"></div>
+					${imagen}
+				</div>
+				${p.categories ? `<p class="text-xs font-semibold tracking-widest uppercase text-brand-caramel">${p.categories.name}</p>` : ''}
+				<h3 class="font-serif mt-1 text-xl font-bold text-brand-chocolate">${p.name}</h3>
+				<p class="mt-1 text-sm text-brand-chocolate/70 line-clamp-2">${p.description ?? ''}</p>
+				<p class="text-brand-caramel mt-auto pt-3 font-sans text-lg font-extrabold">$${Number(p.price).toFixed(2)}</p>
+				<span class="absolute top-3 right-3 z-10 ${p.is_available ? 'bg-brand-red text-white' : 'bg-brand-rose/60 text-brand-darkRed'} text-xs font-bold px-2.5 py-1 rounded-full shadow">
+					${p.is_available ? 'Disponible' : 'Agotado'}
+				</span>
+			</article>
+		`;
+	}
+
+	function abrirDetalle(p: Product) {
+		document.querySelector('#modal-body')!.innerHTML = `
+			${p.image_url ? `<div class="relative h-64 rounded-2xl bg-brand-rose/25"><img src="${p.image_url}" alt="${p.name}" class="absolute inset-0 h-full w-full object-contain p-3 drop-shadow-[0_14px_14px_rgba(69,26,3,0.3)]" /></div>` : '<div class="text-center text-6xl"><i class="fa-solid fa-mug-hot text-brand-red"></i></div>'}
+			${p.categories ? `<p class="mt-4 text-xs font-semibold tracking-widest uppercase text-brand-caramel">${p.categories.name}</p>` : ''}
+			<h3 class="font-serif text-2xl font-extrabold text-brand-chocolate">${p.name}</h3>
+			<p class="mt-2 text-brand-chocolate/80">${p.description ?? ''}</p>
+			<p class="text-brand-caramel mt-4 font-sans text-2xl font-extrabold">$${Number(p.price).toFixed(2)}</p>
+		`;
+		modal.showModal();
+	}
+
+	document.querySelector('#modal-close')!.addEventListener('click', () => modal.close());
+	modal.addEventListener('click', (e) => { if (e.target === modal) modal.close(); });
+	grid.addEventListener('click', (e) => {
+		const el = (e.target as HTMLElement).closest('[data-product]') as HTMLElement | null;
+		if (!el) return;
+		const p = productos.find((x) => x.id === el.dataset.product);
+		if (p) abrirDetalle(p);
+	});
+
+	try {
+		const { data, error } = await supabase
+			.from('products')
+			.select('*, categories(*)');
+
+		if (error) throw error;
+
+		productos = (data as Product[]) ?? [];
+
+		const cats = [...new Map(productos.map((p) => p.categories).filter(Boolean).map((c) => [c!.id, c!])).values()];
+
+		if (cats.length) {
+			const base = 'cat-chip font-sans rounded-full border-2 px-4 py-1.5 text-sm font-bold transition-colors';
+			const inactivo = 'border-brand-rose text-brand-chocolate hover:border-brand-red hover:text-brand-red';
+			const activo = 'border-brand-red bg-brand-red text-white';
+			const chip = (id: string, nombre: string) =>
+				`<button data-cat="${id}" class="${base} ${id === '*' ? activo : inactivo}">${nombre}</button>`;
+
+			categoriasEl.innerHTML = [chip('*', 'Todos'), ...cats.map((c) => chip(c.id, c.name))].join('');
+			categoriasEl.classList.remove('hidden');
+
+			categoriasEl.addEventListener('click', (e) => {
+				const btn = (e.target as HTMLElement).closest('[data-cat]') as HTMLElement | null;
+				if (!btn) return;
+				const catId = btn.dataset.cat!;
+				categoriasEl.querySelectorAll<HTMLElement>('[data-cat]').forEach((el) => {
+					el.className = `${base} ${el === btn ? activo : inactivo}`;
+				});
+				const visibles = catId === '*' ? productos : productos.filter((p) => p.category_id === catId);
+				render(visibles);
+			});
+		}
+
+		render(productos);
+	} catch (err) {
+		grid.innerHTML =
+			'<p class="col-span-full text-center text-brand-chocolate/60">No pude cargar el menú — revisa las claves de Supabase en .env.</p>';
+		console.error('[menu]', err);
+	}
+
+	function render(list: Product[]) {
+		grid.innerHTML = list.length
+			? list.map(tarjeta).join('')
+			: '<p class="col-span-full text-center text-brand-chocolate/60">Aún no hay productos disponibles en Supabase.</p>';
+	}
+</script>
