@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* Fuente de marca (la más cercana al lettering del logo). Autohospedada:
+   coloca el archivo en  public/fonts/KaushanScript-Regular.woff2
+   Licencia: SIL Open Font License (uso comercial permitido). */
+@font-face {
+	font-family: "Kaushan Script";
+	src: url("/fonts/KaushanScript-Regular.woff2") format("woff2");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+/*
+ Paleta de Amor Amor Café (según las especificaciones de diseño).
+ Cada token se usa como clase Tailwind: bg-brand-red, text-brand-caramel, etc.
+ Véase especificaciones_de_dise_o_e_implementaci_n.md §2.
+*/
+@theme {
+	--color-brand-red: #dc2626; /* Rojo Pasión — acentos y botones primarios */
+	--color-brand-darkRed: #991b1b; /* Hover de botones */
+	--color-brand-rose: #fca5a5; /* Bordes sutiles, resplandores */
+	--color-brand-cream: #fffdf9; /* Fondo principal */
+	--color-brand-warmIvory: #f9f6f0; /* Fondos de contraste y modales */
+	--color-brand-chocolate: #3a1e19; /* Tipografía, footers */
+	--color-brand-caramel: #d97706; /* Subtítulos, firmas */
+	--color-brand-gold: #f59e0b; /* Estrellas y decoración */
+	--color-background-dark: #120907; /* Escenario 2.5D */
+
+	/* Tokens del Admin Panel (DISENO_Admin_AmorAmorCafe.md) */
+	--color-brand-choc: #451a03; /* Chocolate Oscuro del panel admin */
+	--color-brand-ivory: #faf4e8; /* Blanco cálido de tarjetas del panel */
+
+	--font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+	--font-serif: "Playfair Display", Georgia, serif;
+	--font-cursive: "Caveat", cursive;
+	--font-brand: "Kaushan Script", "Caveat", cursive; /* wordmark / logo */
+	--font-mont: "Montserrat", Inter, system-ui, sans-serif;
+}
