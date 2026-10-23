@@ -1,0 +1,941 @@
+---
+/*
+ Admin Panel — Amor Amor Café
+ Rediseño según DISENO_Admin_AmorAmorCafe.md: sidebar rojo 280px, header sticky
+ con saludo dinámico y buscador, KPIs, cupones tipo ticket con perforación,
+ carta de menú con marco dorado, cita roja, toast chocolate, modal <dialog>,
+ animaciones rise/beat. CRUD posts/products/categories + imágenes en Storage.
+*/
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Admin Panel — Amor Amor Café">
+	<!-- Sprite de iconos (§7): corazón y estrella rellenos reutilizables -->
+	<svg xmlns="http://www.w3.org/2000/svg" class="hidden" aria-hidden="true">
+		<symbol id="heart" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21c-4.97-3.44-8.2-6.57-9.47-9.47C1.1 8.05 2.68 4.5 6.25 4.5c1.9 0 3.4 1.05 4.25 2.4 1.29-2.07 2.78-3.16 4.25-2.4 3.57 0 5.15 3.55 3.72 7.03C17.2 14.43 14.97 17.56 12 21z"/></symbol>
+		<symbol id="star" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01z"/></symbol>
+	</svg>
+
+	<!-- ── Pantalla de LOGIN (antes de sesión) ── -->
+	<div id="login-screen" class="fixed inset-0 z-30 grid place-items-center bg-brand-cream px-6">
+		<div class="w-full max-w-md">
+			<!-- Formulario de acceso (solo login, sin registro) -->
+			<div id="login-card" class="rounded-[28px] bg-brand-ivory border border-brand-choc/10 p-8 [box-shadow:0_12px_30px_-18px_rgba(69,26,3,.35)]">
+				<div class="text-center">
+					<div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-red text-white [box-shadow:0_12px_26px_-10px_rgba(220,38,38,.5)]">
+						<svg class="size-6 beat" aria-hidden="true"><use href="#heart"></use></svg>
+					</div>
+					<p class="font-mont mt-5 text-xs font-bold uppercase text-brand-gold" style="letter-spacing:.22em">La esencia del café</p>
+					<h1 class="font-mont mt-1 text-[30px] font-black tracking-tight text-brand-choc">Acceso <span class="text-brand-red">Staff</span></h1>
+					<p class="font-serif mt-1 text-[17px] italic text-brand-choc/75">"donde el café se encuentra con el corazón"</p>
+				</div>
+
+				<!-- onsubmit inline: evita el envío GET nativo que filtraría el password en la URL -->
+				<form id="login-form" onsubmit="event.preventDefault()" class="mt-8 grid gap-4">
+					<label class="block font-mont text-sm font-bold text-brand-choc">
+						Correo
+						<input name="email" type="email" required autocomplete="email" placeholder="staff@amoramorcafe.com"
+							class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+					</label>
+					<label class="block font-mont text-sm font-bold text-brand-choc">
+						Contraseña
+						<input name="password" type="password" required autocomplete="current-password" placeholder="••••••••"
+							class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+					</label>
+					<button type="submit"
+						class="mt-2 rounded-full bg-brand-red px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 active:scale-95 [box-shadow:0_12px_26px_-10px_rgba(220,38,38,.5)]">
+						Ingresar <i class="fa-solid fa-right-to-bracket ml-1"></i>
+					</button>
+					<p id="login-msg" class="text-center font-mont text-sm font-semibold text-brand-red" hidden></p>
+				</form>
+			</div>
+
+			<!-- Sesión sin permisos de admin/staff -->
+			<div id="denied-card" hidden class="rounded-[28px] bg-brand-ivory border border-brand-choc/10 p-8 text-center [box-shadow:0_12px_30px_-18px_rgba(69,26,3,.35)]">
+				<div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-choc/10 text-brand-choc/60">
+					<svg class="size-6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"></path></svg>
+				</div>
+				<h2 class="font-mont mt-4 text-xl font-black tracking-tight text-brand-choc">Sesión sin permisos</h2>
+				<p class="font-serif mt-2 text-[17px] italic text-brand-choc/75">
+					Tu rol en <code class="font-mont text-xs not-italic text-brand-red">public.profiles</code> no es <code class="font-mont text-xs not-italic text-brand-red">admin</code> ni <code class="font-mont text-xs not-italic text-brand-red">staff</code>.
+				</p>
+				<button type="button" id="denied-logout"
+					class="mt-6 rounded-full border-2 border-brand-choc/15 px-6 py-3 text-sm font-bold text-brand-choc transition hover:bg-brand-ivory hover:border-brand-red hover:text-brand-red">
+					Cerrar sesión
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- ── APP: sidebar + contenido (solo con sesión admin/staff) ── -->
+	<div id="app" hidden class="flex h-[100dvh] overflow-hidden bg-brand-cream font-mont text-brand-choc">
+		<!-- SIDEBAR (§6.1) -->
+		<aside class="relative z-20 hidden w-[280px] shrink-0 bg-brand-red px-7 py-9 md:flex md:flex-col md:justify-between">
+			<div>
+				<a href="/" class="mx-auto block w-44 rounded-[28px] bg-brand-cream p-4 opacity-100 transition-all duration-300 hover:scale-105 hover:opacity-80 [box-shadow:0_12px_30px_-18px_rgba(69,26,3,.35)]">
+					<img src="/logo.png" alt="Amor Amor Café" class="w-full"
+						onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';" />
+					<div class="hidden h-24 w-full place-items-center rounded-2xl bg-brand-red text-white"><svg class="size-8" aria-hidden="true"><use href="#heart"></use></svg></div>
+				</a>
+				<p class="font-serif mt-5 text-center text-2xl italic text-white">Admin Panel</p>
+				<div class="my-6 flex items-center gap-3" aria-hidden="true">
+					<span class="h-px flex-1 bg-white/40"></span>
+					<svg class="size-3.5 beat text-white" aria-hidden="true"><use href="#heart"></use></svg>
+					<span class="h-px flex-1 bg-white/40"></span>
+				</div>
+				<nav class="space-y-2">
+					<button type="button" data-tab="posts" class="nav-link w-full">
+						<svg class="size-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>
+						<span>Novedades</span>
+					</button>
+					<button type="button" data-tab="products" class="nav-link w-full">
+						<svg class="size-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"></path></svg>
+						<span>Menú</span>
+					</button>
+					<button type="button" data-tab="categories" class="nav-link w-full">
+						<svg class="size-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+						<span>Categorías</span>
+					</button>
+				</nav>
+			</div>
+			<div class="text-center">
+				<p class="font-serif text-[19px] italic leading-6 text-white">"La esencia del café,<br />con una gota de lo nuestro."</p>
+				<span id="estado-pill" class="mt-5 inline-flex items-center gap-2 rounded-full border border-white/40 px-4 py-2.5 text-xs font-semibold text-white">
+					<span class="size-2 rounded-full bg-white"></span>
+					<span id="estado-texto">Conectando…</span>
+				</span>
+			</div>
+		</aside>
+
+		<!-- COLUMNA DERECHA -->
+		<div class="flex min-w-0 flex-1 flex-col">
+			<!-- HEADER (§6.2) -->
+			<header class="sticky top-0 z-10 border-b border-brand-choc/10 bg-brand-cream px-5 py-5 sm:px-10">
+				<div class="flex items-center justify-between gap-3">
+					<div class="min-w-0">
+						<p id="kicker-fecha" class="font-mont text-[11px] font-bold uppercase text-brand-gold" style="letter-spacing:.22em"></p>
+						<h1 class="mt-0.5 truncate font-mont text-[30px] font-black leading-tight tracking-tight text-brand-choc">
+							<span id="saludo">Buenos días</span> <span class="text-brand-red">equipo</span>
+						</h1>
+						<p class="font-serif text-[17px] text-brand-choc/75">"Crujiente por fuera, tierno en su centro, como el amor verdadero que nace por dentro."</p>
+					</div>
+					<div class="flex shrink-0 items-center gap-3">
+						<div id="buscador" class="hidden items-center gap-2 rounded-full border border-brand-choc/15 bg-brand-ivory px-4 py-2.5 focus-within:border-brand-red sm:flex">
+							<svg class="size-4 text-brand-choc/60" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+							<input id="busqueda" type="search" placeholder="Buscar cupón o promo" class="w-36 bg-transparent text-sm font-medium text-brand-choc placeholder:text-brand-choc/45 focus:outline-none" />
+						</div>
+						<div class="relative hidden size-11 place-items-center rounded-full border border-brand-choc/15 bg-brand-ivory transition-colors hover:border-brand-red sm:grid" title="Notificaciones">
+							<svg class="size-5 text-brand-choc/70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+							<span class="absolute right-0 top-0 size-2.5 rounded-full bg-brand-red ring-2 ring-brand-cream"></span>
+						</div>
+						<div id="avatar" class="grid size-11 place-items-center rounded-full bg-brand-red text-sm font-black text-white">AA</div>
+					</div>
+				</div>
+			</header>
+
+			<!-- NAV MÓVIL (§6.3) -->
+			<nav class="flex gap-2 overflow-x-auto border-b border-brand-choc/10 bg-brand-cream px-5 py-3 md:hidden">
+				<button type="button" data-tab="posts" class="chip-tab shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors">Novedades</button>
+				<button type="button" data-tab="products" class="chip-tab shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors">Menú</button>
+				<button type="button" data-tab="categories" class="chip-tab shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors">Categorías</button>
+			</nav>
+
+			<!-- CONTENIDO (scroll propio) -->
+			<main class="min-w-0 flex-1 overflow-y-auto px-5 py-9 sm:px-10">
+				<div class="mx-auto max-w-[1400px] space-y-12">
+
+					<!-- KPIs (§6.4) -->
+					<section class="grid grid-cols-2 gap-4 xl:grid-cols-4 xl:gap-6" aria-label="Resumen">
+						<article class="rise relative overflow-hidden rounded-[28px] bg-brand-red p-6 text-white [box-shadow:0_12px_26px_-10px_rgba(220,38,38,.5)]">
+							<svg class="pointer-events-none absolute -bottom-6 -right-5 size-32 text-white/15" aria-hidden="true"><use href="#heart"></use></svg>
+							<p class="text-[11px] font-bold uppercase text-white/70" style="letter-spacing:.18em">Cupones activos</p>
+							<p id="k-activos" class="mt-3 text-[56px] font-black leading-none tabular-nums">0</p>
+							<p class="mt-2 font-serif text-lg italic text-white/85">listos para enamorar</p>
+						</article>
+						<article class="rise d1 rounded-[28px] border border-brand-choc/10 bg-brand-ivory p-6 [box-shadow:0_12px_30px_-18px_rgba(69,26,3,.35)]">
+							<p class="text-[11px] font-bold uppercase text-brand-choc/60" style="letter-spacing:.18em">Productos en menú</p>
+							<p id="k-productos" class="mt-3 text-[56px] font-black leading-none tabular-nums">0</p>
+							<p class="mt-2 font-serif text-lg italic text-brand-choc/75">waffles, crepas y frappés</p>
+						</article>
+						<article class="rise d2 rounded-[28px] border border-brand-choc/10 bg-brand-ivory p-6 [box-shadow:0_12px_30px_-18px_rgba(69,26,3,.35)]">
+							<p class="text-[11px] font-bold uppercase text-brand-choc/60" style="letter-spacing:.18em">Categorías vivas</p>
+							<p id="k-categorias" class="mt-3 text-[56px] font-black leading-none tabular-nums">0</p>
+						<div class="mt-2 flex gap-1 text-brand-gold" aria-hidden="true">
+							<svg class="size-5"><use href="#star"></use></svg><svg class="size-5"><use href="#star"></use></svg><svg class="size-5"><use href="#star"></use></svg><svg class="size-5"><use href="#star"></use></svg><svg class="size-5"><use href="#star"></use></svg>
+						</div>
+						</article>
+						<article class="rise d3 relative overflow-hidden rounded-[28px] bg-brand-choc p-6 text-brand-cream [box-shadow:0_12px_30px_-18px_rgba(69,26,3,.35)]">
+							<svg class="pointer-events-none absolute -bottom-6 -right-5 size-32 text-white/10" aria-hidden="true"><use href="#heart"></use></svg>
+							<p class="text-[11px] font-bold uppercase text-brand-cream/70" style="letter-spacing:.18em">Sucursales</p>
+							<p id="k-sucursales" class="mt-3 text-[56px] font-black leading-none tabular-nums">0</p>
+							<span class="mt-2 inline-flex items-center gap-2 rounded-full border border-brand-gold bg-brand-gold/15 px-3 py-1 text-xs font-semibold text-brand-gold">
+								<span class="size-2 animate-pulse rounded-full bg-brand-gold"></span> En línea
+							</span>
+						</article>
+					</section>
+
+					<!-- CUPONES tipo ticket (§6.5) -->
+					<section id="seccion-posts" class="rise">
+						<div class="flex flex-wrap items-center justify-between gap-4">
+							<div>
+								<h2 class="font-mont text-3xl font-black tracking-tight text-brand-choc">Últimas <span class="text-brand-red">promociones</span></h2>
+								<p class="font-serif mt-1 text-[19px] text-brand-choc/75">Los cupones que más enamoran esta semana</p>
+							</div>
+							<button type="button" data-nuevo="posts"
+								class="rounded-full bg-brand-red px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 active:scale-95 [box-shadow:0_12px_26px_-10px_rgba(220,38,38,.5)]">
+								<i class="fa-solid fa-plus mr-1"></i>Nuevo cupón
+							</button>
+						</div>
+						<div id="posts-list" class="mt-6 grid gap-6 xl:grid-cols-2"></div>
+					</section>
+
+					<!-- MENÚ carta (§6.7) -->
+					<section id="seccion-products" class="rise">
+						<div class="flex flex-wrap items-center justify-between gap-4">
+							<div>
+								<h2 class="font-mont text-3xl font-black tracking-tight text-brand-choc">Menú de la <span class="text-brand-red">carta</span></h2>
+								<p class="font-serif mt-1 text-[19px] text-brand-choc/75">Cada receta con su precio y su ternura</p>
+							</div>
+							<button type="button" data-nuevo="products"
+								class="rounded-full bg-brand-red px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 active:scale-95 [box-shadow:0_12px_26px_-10px_rgba(220,38,38,.5)]">
+								<i class="fa-solid fa-plus mr-1"></i>Nuevo producto
+							</button>
+						</div>
+						<div class="relative mt-6 overflow-hidden rounded-[28px] border border-brand-choc/10 bg-brand-ivory p-7 sm:p-9 [box-shadow:0_12px_30px_-18px_rgba(69,26,3,.35)]">
+							<div class="pointer-events-none absolute inset-3 rounded-[20px] border border-brand-gold/60"></div>
+							<div class="text-center">
+								<p class="text-[11px] font-bold uppercase text-brand-gold" style="letter-spacing:.3em">A la venta hoy</p>
+								<div class="mt-3 flex items-center justify-center gap-3" aria-hidden="true">
+									<span class="h-px w-14 bg-brand-gold/60"></span>
+									<svg class="size-4 text-brand-red" aria-hidden="true"><use href="#heart"></use></svg>
+									<span class="h-px w-14 bg-brand-gold/60"></span>
+								</div>
+							</div>
+							<div id="products-list" class="mt-6 space-y-4"></div>
+							<p class="mt-6 text-center font-serif text-base italic text-brand-choc/55">precio y disponibilidad en vivo desde Supabase</p>
+						</div>
+					</section>
+
+					<!-- CATEGORÍAS (derecha 3 col) + CITA roja (§6.8) -->
+					<section id="seccion-categories" class="rise grid gap-6 lg:grid-cols-5">
+						<div class="relative overflow-hidden rounded-[28px] border border-brand-choc/10 bg-brand-ivory p-7 sm:p-9 lg:col-span-3 [box-shadow:0_12px_30px_-18px_rgba(69,26,3,.35)]">
+							<div class="pointer-events-none absolute inset-3 rounded-[20px] border border-brand-gold/60"></div>
+							<div class="flex flex-wrap items-center justify-between gap-4">
+								<div>
+									<p class="text-[11px] font-bold uppercase text-brand-gold" style="letter-spacing:.3em">El corazón del menú</p>
+									<h2 class="font-mont mt-1 text-3xl font-black tracking-tight text-brand-choc">Categorías</h2>
+								</div>
+								<button type="button" data-nuevo="categories"
+									class="rounded-full bg-brand-red px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 active:scale-95 [box-shadow:0_12px_26px_-10px_rgba(220,38,38,.5)]">
+									<i class="fa-solid fa-plus mr-1"></i>Nueva categoría
+								</button>
+							</div>
+							<div id="categories-list" class="mt-6 space-y-4"></div>
+						</div>
+
+						<div class="relative flex flex-col justify-between overflow-hidden rounded-[28px] bg-brand-red p-8 text-white [box-shadow:0_12px_26px_-10px_rgba(220,38,38,.5)] lg:col-span-2">
+							<svg class="pointer-events-none absolute -bottom-8 -right-8 size-44 text-white/15" aria-hidden="true"><use href="#heart"></use></svg>
+							<p class="text-[11px] font-bold uppercase text-white/80" style="letter-spacing:.3em">Amor Amor Café</p>
+							<blockquote class="mt-6 font-serif text-[28px] italic leading-[1.2] text-white">"Preparado con amor, servido con pasión."</blockquote>
+							<p class="mt-6 font-serif text-lg italic text-white/85">Gracias por ser parte de nuestra dulce tradición.</p>
+						</div>
+					</section>
+
+					<!-- FOOTER (§6.11) -->
+					<footer class="pb-10 text-center font-serif text-xl italic text-brand-choc/75">
+						"Preparado con amor, servido con pasión. Gracias por ser parte de nuestra dulce tradición."
+					</footer>
+				</div>
+			</main>
+		</div>
+	</div>
+
+	<!-- ── MODAL de alta / edición (§6.9) ── -->
+	<dialog id="crud-modal" class="m-auto w-[92vw] max-w-md rounded-[28px] border border-brand-choc/15 bg-brand-cream p-0 shadow-2xl">
+		<form id="crud-form" data-item-type="posts" class="space-y-5 p-8">
+			<div class="flex items-start justify-between gap-4">
+				<div>
+					<h2 id="crud-title" class="text-[30px] font-black tracking-tight text-brand-choc"></h2>
+					<p class="font-serif text-[17px] italic text-brand-choc/75">con una gota de lo nuestro</p>
+				</div>
+				<button type="button" id="crud-close" aria-label="Cerrar" class="grid size-9 shrink-0 place-items-center rounded-full text-xl text-brand-choc/50 transition hover:bg-brand-ivory hover:text-brand-red">×</button>
+			</div>
+
+			<div data-fields="posts" class="grid gap-4">
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Título
+					<input name="title" placeholder="2x1 Parejas" maxlength="150" required
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Descripción
+					<textarea name="content" rows="3" placeholder="$50 MXN en bebidas" required
+						class="mt-1.5 w-full resize-y rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none"></textarea>
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Código <span class="font-mono uppercase tracking-wider"></span>
+					<input name="promo_code" placeholder="AMOR2X1" maxlength="16"
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-mono uppercase tracking-wider font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Badge de descuento
+					<input name="discount_badge" placeholder="2x1 / -15% / 50%" maxlength="50"
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Vence
+					<input name="valid_until" type="date"
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc focus:border-brand-red outline-none" />
+				</label>
+				<input name="prompt_image_posts" placeholder="Image URL (https://…)" maxlength="500"
+					class="w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+			</div>
+
+			<div data-fields="products" hidden class="grid gap-4">
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Categoría
+					<select name="category_id" required
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc focus:border-brand-red outline-none">
+						<option value="">Categoría…</option>
+					</select>
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Producto
+					<input name="name" placeholder="Bubble Waffle Kinder Bueno" maxlength="150" required
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Descripción
+					<textarea name="description" rows="2" placeholder="Crujiente cono de burbujas, helado de vainilla…" 
+						class="mt-1.5 w-full resize-y rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none"></textarea>
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Precio (MXN)
+					<input name="price" type="number" step="0.01" min="0" placeholder="125.00" required
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal tabular-nums text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+				</label>
+				<label class="flex items-center gap-2 font-mont text-sm font-bold text-brand-choc">
+					<input name="is_available" type="checkbox" checked class="size-4 accent-brand-red" />
+					Disponible en el menú
+				</label>
+				<input name="prompt_image_products" placeholder="Image URL (https://…)" maxlength="500"
+					class="w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+			</div>
+
+			<div data-fields="categories" hidden class="grid gap-4">
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Nombre
+					<input name="cat_name" placeholder="Bubble Waffles" maxlength="100" required
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Slug (opcional, se autogenera)
+					<input name="cat_slug" placeholder="bubble-waffles" maxlength="100" lowercase
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Orden de aparición
+					<input name="cat_display_order" type="number" min="0" step="1" placeholder="0, 1, 2…"
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal tabular-nums text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+				</label>
+				<label class="flex items-center gap-2 font-mont text-sm font-bold text-brand-choc">
+					<input name="cat_is_active" type="checkbox" checked class="size-4 accent-brand-red" />
+					Categoría activa
+				</label>
+			</div>
+
+			<label data-solo-media hidden class="block font-mont text-sm font-bold text-brand-choc">
+				Imagen del producto (bucket <span class="font-mono text-brand-red">product-images</span>)
+				<input type="file" name="image_file" accept="image/png,image/jpeg,image/webp"
+					class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 text-sm font-normal file:mr-3 file:rounded-full file:border-0 file:bg-brand-red/10 file:px-4 file:py-1.5 file:text-sm file:font-bold file:text-brand-red" />
+			</label>
+			<p id="upload-msg" class="text-center font-mont text-xs font-semibold text-brand-gold" hidden></p>
+
+			<div class="flex justify-end gap-3 pt-1">
+				<button type="button" id="crud-cancel" class="rounded-full px-6 py-3 text-sm font-bold text-brand-choc transition hover:bg-brand-ivory">Cancelar</button>
+				<button type="submit" id="crud-submit"
+					class="rounded-full bg-brand-red px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 active:scale-95 [box-shadow:0_12px_26px_-10px_rgba(220,38,38,.5)]">
+					Guardar <i class="fa-solid fa-heart ml-1"></i>
+				</button>
+			</div>
+			<p id="crud-msg" class="text-center font-mont text-sm font-semibold text-brand-red" hidden></p>
+		</form>
+	</dialog>
+
+	<!-- TOAST (§6.10) -->
+	<div id="toast" hidden class="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-brand-choc px-5 py-3 text-sm font-semibold text-brand-cream [box-shadow:0_12px_30px_-18px_rgba(69,26,3,.35)]"></div>
+</Layout>
+
+<script>
+	import { supabase } from '../lib/supabase.js';
+
+	/* ---------- Tipos del esquema ---------- */
+	type Post = {
+		id: string; title: string; slug: string; content: string;
+		image_url: string | null; promo_code: string | null;
+		discount_badge: string | null; valid_until: string | null;
+	};
+	type Product = {
+		id: string; category_id: string | null; name: string;
+		description: string | null; price: number; image_url: string | null;
+		is_available: boolean; categories: { name: string } | null;
+	};
+	type Category = {
+		id: string; name: string; slug: string;
+		display_order: number; is_active: boolean;
+	};
+	type TipoItem = 'posts' | 'products' | 'categories';
+
+	/* ---------- Referencias ---------- */
+	const loginScreen = document.querySelector<HTMLElement>('#login-screen')!;
+	const loginCard = document.querySelector<HTMLElement>('#login-card')!;
+	const deniedCard = document.querySelector<HTMLElement>('#denied-card')!;
+	const app = document.querySelector<HTMLElement>('#app')!;
+	const form = document.querySelector<HTMLFormElement>('#crud-form')!;
+	const modal = document.querySelector<HTMLDialogElement>('#crud-modal')!;
+	const crudMsg = document.querySelector<HTMLElement>('#crud-msg')!;
+	const uploadMsg = document.querySelector<HTMLElement>('#upload-msg')!;
+	const crudTitle = document.querySelector<HTMLElement>('#crud-title')!;
+	const postsList = document.querySelector<HTMLElement>('#posts-list')!;
+	const productsList = document.querySelector<HTMLElement>('#products-list')!;
+	const categoriesList = document.querySelector<HTMLElement>('#categories-list')!;
+	const toast = document.querySelector<HTMLElement>('#toast')!;
+	const busqueda = document.querySelector<HTMLInputElement>('#busqueda')!;
+
+	let tipo: TipoItem = 'posts';
+	let editandoId: string | null = null;
+	let categorias: { id: string; name: string }[] = [];
+	let usuarioRol = '';
+	let searchTimer = 0;
+
+	/* ---------- Utilidades (§10: esc para todo texto de usuario) ---------- */
+	function esc(v: string | null | undefined): string {
+		return (v ?? '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]!));
+	}
+
+	function toastMsg(texto: string) {
+		toast.textContent = texto;
+		toast.removeAttribute('hidden');
+		clearTimeout((toast as unknown as { _t?: number })._t);
+		(toast as unknown as { _t?: number })._t = window.setTimeout(() => toast.setAttribute('hidden', ''), 3500);
+	}
+
+	function estaActivo(validUntil: string | null): boolean {
+		if (!validUntil) return false;
+		return new Date(validUntil + 'T23:59:59') >= new Date();
+	}
+
+	function slugify(t: string): string {
+		return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+			.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'post-' + Date.now().toString(36);
+	}
+
+	/* ---------- Saludo y fecha del header (§6.2) ---------- */
+	function pintarSaludo() {
+		const ahora = new Date();
+		kickerFecha(ahora);
+		const h = ahora.getHours();
+		saludoEl.textContent = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+	}
+	function kickerFecha(d: Date) {
+		const s = d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+		document.querySelector('#kicker-fecha')!.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+	}
+	const saludoEl = document.querySelector<HTMLElement>('#saludo')!;
+	pintarSaludo();
+
+	/* ---------- Tabs / navegación (sidebar + chips móviles) ---------- */
+	function pintarActivos(nuevo: TipoItem) {
+		document.querySelectorAll<HTMLButtonElement>('.nav-link').forEach((b) => {
+			const activo = (b as HTMLElement).dataset.tab === nuevo;
+			b.className = 'nav-link flex w-full items-center gap-3.5 rounded-full px-5 py-3 text-sm transition-all duration-[250ms] ' +
+				(activo ? 'bg-brand-cream text-brand-red font-bold' : 'text-white opacity-90 font-semibold hover:opacity-100 hover:translate-x-1.5');
+		});
+		document.querySelectorAll<HTMLButtonElement>('.chip-tab').forEach((b) => {
+			const activo = (b as HTMLElement).dataset.tab === nuevo;
+			b.className = 'chip-tab shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors ' +
+				(activo ? 'bg-brand-red text-white' : 'bg-brand-ivory text-brand-choc border border-brand-choc/15');
+		});
+	}
+
+	function verTab(nuevo: TipoItem) {
+		tipo = nuevo;
+		document.querySelector('#seccion-posts')!.hidden = nuevo !== 'posts';
+		document.querySelector('#seccion-products')!.hidden = nuevo !== 'products';
+		document.querySelector('#seccion-categories')!.hidden = nuevo !== 'categories';
+		pintarActivos(nuevo);
+		cargar();
+	}
+
+	/* ---------- Carga de listas ---------- */
+	async function cargar() {
+		if (tipo === 'posts') await cargarPosts();
+		else if (tipo === 'categories') await cargarCategorias();
+		else await cargarProductos();
+	}
+
+	async function cargarPosts() {
+		postsList.innerHTML = '<p class="rise col-span-full text-center font-serif text-2xl italic text-brand-choc/60">Cargando cupones…</p>';
+		try {
+			const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+			if (error) throw error;
+			const posts = (data as Post[]) ?? [];
+			if (!posts.length) {
+				postsList.innerHTML = '<p class="col-span-full text-center font-serif text-2xl italic text-brand-choc/60">Aún no hay cupones: crea el primero arriba ♥</p>';
+				return;
+			}
+			postsList.innerHTML = posts.map((p, i) => tarjetaPost(p, i)).join('');
+		} catch (err) { postsList.innerHTML = avisoCarga(err); }
+		aplicarBusqueda();
+	}
+
+	async function cargarProductos() {
+		productsList.innerHTML = '<p class="text-center font-serif text-lg italic text-brand-choc/60">Cargando carta…</p>';
+		try {
+			if (!categorias.length) {
+				const { data: cats } = await supabase.from('categories').select('id, name').order('display_order');
+				categorias = (cats as { id: string; name: string }[]) ?? [];
+			}
+			const { data, error } = await supabase.from('products').select('*, categories(name)').order('name');
+			if (error) throw error;
+			const productos = (data as Product[]) ?? [];
+			productsList.innerHTML = productos.length ? productos.map(filaProducto).join('')
+				: '<p class="text-center font-serif text-lg italic text-brand-choc/55">Aún no hay productos en la carta ♥</p>';
+			refrescarCategoriasSelect();
+		} catch (err) { productsList.innerHTML = avisoCarga(err); }
+	}
+
+	async function cargarCategorias() {
+		categoriesList.innerHTML = '<p class="text-center font-serif text-lg italic text-brand-choc/55">Cargando categorías…</p>';
+		try {
+			const { data, error } = await supabase.from('categories').select('*').order('display_order');
+			if (error) throw error;
+			categorias = (data as { id: string; name: string }[]) ?? [];
+			const cats = (data as Category[]) ?? [];
+			refrescarCategoriasSelect();
+			categoriesList.innerHTML = cats.length ? cats.map(filaCategoria).join('')
+				: '<p class="text-center font-serif text-lg italic text-brand-choc/55">Aún no hay categorías ♥</p>';
+		} catch (err) { categoriesList.innerHTML = avisoCarga(err); }
+	}
+
+	async function cargarKPIs() {
+		try {
+			const [{ data: posts }, { data: productos }, { data: cats }, { count: sucursales, error: eSuc }] = await Promise.all([
+				supabase.from('posts').select('*'),
+				supabase.from('products').select('id', { count: 'exact' }),
+				supabase.from('categories').select('id', { count: 'exact' }),
+				supabase.from('branches').select('id', { count: 'exact' }),
+			]);
+			if (eSuc) throw eSuc;
+			document.querySelector('#k-activos')!.textContent = String(((posts as Post[]) ?? []).filter((p) => estaActivo(p.valid_until)).length);
+			document.querySelector('#k-productos')!.textContent = String((productos as { id: string }[] | null)?.length ?? 0);
+			document.querySelector('#k-categorias')!.textContent = String((cats as { id: string }[] | null)?.length ?? 0);
+			document.querySelector('#k-sucursales')!.textContent = String(sucursales ?? 0);
+		} catch (err) {
+			console.error('[admin-kpis]', err);
+		}
+	}
+
+	function avisoCarga(err: unknown): string {
+		console.error('[admin-carga]', err);
+		return '<p class="col-span-full text-center font-serif text-xl italic text-brand-choc/60">No pude leer Supabase. Mostrando secciones vacías.</p>';
+	}
+
+	/* ---------- Tarjetas: cupón ticket (§6.5) ---------- */
+	function tarjetaPost(p: Post, i: number): string {
+		const activo = estaActivo(p.valid_until);
+		const badge = activo ? 'Activo' : 'Expirado';
+		const bordeClase = activo ? 'border-2 border-dashed border-brand-gold bg-brand-ivory' : 'border-2 border-dashed border-brand-choc/25 bg-brand-cream';
+		const perforacion = activo ? 'border-brand-gold/70' : 'border-brand-choc/20';
+		const cicloIcono = activo ? 'bg-brand-red text-white' : 'bg-brand-choc/10 text-brand-choc/40';
+		const cicloBeat = activo ? ' beat' : '';
+		const fechaTxt = p.valid_until
+			? `vence el ${new Date(p.valid_until + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}`
+			: 'sin fecha de vigencia';
+		const dataQ = esc(`${p.title} ${p.promo_code ?? ''} ${p.content}`).toUpperCase();
+		return `
+			<article data-q="${dataQ}" style="animation-delay:${i * 80}ms"
+				class="coupon rise group relative rounded-[28px] p-6 transition-all duration-300 hover:-translate-y-1 hover:[box-shadow:0_18px_34px_-20px_rgba(69,26,3,.45)] ${bordeClase}">
+				<div class="flex items-start gap-4">
+					<div class="grid size-12 shrink-0 place-items-center rounded-full ${cicloIcono}">
+						<svg class="size-5${cicloBeat}" aria-hidden="true"><use href="#heart"></use></svg>
+					</div>
+					<div class="min-w-0 flex-1">
+						<p class="font-mont text-2xl leading-none font-black tracking-tight break-all text-brand-choc">${esc(p.promo_code ?? p.title)}</p>
+						<p class="mt-2 text-[15px] font-medium text-brand-choc/80">${esc(p.title)}${p.discount_badge ? ' · ' + esc(p.discount_badge) : ''}</p>
+						<p class="font-serif mt-1 text-base italic text-brand-choc/70">${esc(p.content)}</p>
+					</div>
+					<span class="shrink-0 rounded-full px-3 py-1 text-xs font-bold ${activo ? 'bg-brand-red text-white' : 'bg-brand-choc/10 text-brand-choc/55'}">${badge}</span>
+				</div>
+				<!-- Perforación de ticket -->
+				<div class="relative my-5 -mx-6">
+					<div class="border-t-2 border-dashed ${perforacion}"></div>
+					<span class="absolute -left-[11px] -top-[11px] size-[22px] rounded-full border-2 border-dashed ${perforacion} bg-brand-cream"></span>
+					<span class="absolute -right-[11px] -top-[11px] size-[22px] rounded-full border-2 border-dashed ${perforacion} bg-brand-cream"></span>
+				</div>
+				<div class="flex items-center justify-between gap-3">
+					<p class="font-serif text-lg italic ${activo ? 'text-brand-gold' : 'text-brand-choc/55'}">${esc(fechaTxt)}</p>
+					<div class="flex items-center gap-4">
+						<button data-edit="posts" data-id="${p.id}" class="text-sm font-bold text-brand-red underline decoration-2 underline-offset-4 transition hover:opacity-70">Editar</button>
+						<button data-del="posts" data-id="${p.id}" class="text-sm font-bold text-brand-choc/50 underline decoration-2 underline-offset-4 transition hover:text-brand-red">Eliminar</button>
+					</div>
+				</div>
+			</article>
+		`;
+	}
+
+	/* ---------- Fila de producto estilo carta (§6.7) ---------- */
+	function filaProducto(p: Product): string {
+		return `
+			<div class="flex items-baseline gap-3">
+				<span class="font-mont text-base font-extrabold ${p.is_available ? 'text-brand-choc' : 'text-brand-choc/45 line-through'}">${esc(p.name)}</span>
+				<span class="font-serif pb-0.5 text-[15px] leading-none italic text-brand-choc/70 line-clamp-1 min-w-0">${p.categories ? esc(p.categories.name) + ' · ' : ''}${esc(p.description ?? '')}</span>
+				<span class="flex-1 border-b-2 border-dotted border-brand-gold/60"></span>
+				<button data-disp="${p.id}" data-val="${p.is_available}" title="Cambiar disponibilidad"
+					class="shrink-0 self-center rounded-full px-3.5 py-1 text-sm font-bold tabular-nums ${
+						p.is_available ? 'bg-brand-gold text-white' : 'bg-brand-choc/10 text-brand-choc/55'
+					} transition hover:opacity-80">$${Number(p.price).toFixed(2)}</button>
+				<button data-edit="products" data-id="${p.id}" class="shrink-0 text-xs font-bold text-brand-red underline decoration-2 underline-offset-4 transition hover:opacity-70">Editar</button>
+				<button data-del="products" data-id="${p.id}" class="shrink-0 text-xs font-bold text-brand-choc/50 transition hover:text-brand-red">Eliminar</button>
+			</div>
+		`;
+	}
+
+	/* ---------- Fila de categoría (píldoras de orden) ---------- */
+	function filaCategoria(c: Category): string {
+		return `
+			<div class="flex items-center gap-3">
+				<span class="rounded-full bg-brand-red px-3.5 py-1 text-sm font-bold text-white">${c.display_order}</span>
+				<div class="min-w-0">
+					<span class="font-mont text-base font-extrabold ${c.is_active ? 'text-brand-choc' : 'text-brand-choc/45 line-through'}">${esc(c.name)}</span>
+					<span class="ml-2 font-serif text-sm italic text-brand-choc/55">/${esc(c.slug)}</span>
+				</div>
+				<span class="flex-1 border-b-2 border-dotted border-brand-gold/60"></span>
+				<span class="rounded-full px-3 py-1 text-xs font-bold ${c.is_active ? 'bg-brand-gold/15 text-brand-gold' : 'bg-brand-choc/10 text-brand-choc/55'}">${c.is_active ? 'Activa' : 'Inactiva'}</span>
+				<button data-edit="categories" data-id="${c.id}" class="text-xs font-bold text-brand-red underline decoration-2 underline-offset-4 transition hover:opacity-70">Editar</button>
+				<button data-del="categories" data-id="${c.id}" class="text-xs font-bold text-brand-choc/50 transition hover:text-brand-red">Eliminar</button>
+			</div>
+		`;
+	}
+
+	function refrescarCategoriasSelect() {
+		const sel = document.querySelector<HTMLSelectElement>('select[name="category_id"]')!;
+		sel.innerHTML = '<option value="">Categoría…</option>' + categorias.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+	}
+
+	/* ---------- Búsqueda en vivo (§10) ---------- */
+	function aplicarBusqueda() {
+		if (tipo !== 'posts') return;
+		const q = busqueda.value.trim().toUpperCase();
+		let visibles = 0;
+		document.querySelectorAll<HTMLElement>('#posts-list .coupon').forEach((c) => {
+			const coincide = !q || (c.dataset.q ?? '').toUpperCase().includes(q);
+			c.classList.toggle('hidden', !coincide);
+			if (coincide) visibles++;
+		});
+		let vacio = postsList.querySelector('[data-vacio]');
+		if (!visibles && q) {
+			if (!vacio) {
+				vacio = document.createElement('p');
+				vacio.setAttribute('data-vacio', '');
+				vacio.className = 'col-span-full text-center font-serif text-2xl italic text-brand-choc/60';
+				vacio.textContent = 'Ningún cupón coincide con tu búsqueda.';
+				postsList.appendChild(vacio);
+			}
+		} else {
+			vacio?.remove();
+		}
+	}
+	busqueda.addEventListener('input', aplicarBusqueda);
+
+	/* ---------- Acciones: nuevo / editar / eliminar / disponibilidad / KPI ---------- */
+	async function abrirNuevo(t: TipoItem) {
+		editandoId = null;
+		form.dataset.itemType = t;
+		form.reset();
+		crudMsg.setAttribute('hidden', '');
+		crudTitle.innerHTML = t === 'posts' ? 'Nuevo <span class="text-brand-red">cupón</span>'
+			: t === 'products' ? 'Nuevo <span class="text-brand-red">producto</span>'
+			: 'Nueva <span class="text-brand-red">categoría</span>';
+		document.querySelector('#crud-submit')!.textContent = t === 'posts' ? 'Guardar cupón' : t === 'products' ? 'Guardar producto' : 'Guardar categoría';
+		verCampos(t);
+		refrescarCategoriasSelect();
+		modal.showModal();
+	}
+
+	async function abrirEditar(t: TipoItem, id: string) {
+		try {
+			const tablaBien = t === 'products'
+				? supabase.from(t).select('*, categories(*)').eq('id', id).single()
+				: supabase.from(t).select('*').eq('id', id).single();
+			const { data, error } = await tablaBien;
+			if (error) throw error;
+			editandoId = id;
+			form.dataset.itemType = t;
+			form.reset();
+			const f = form.elements as unknown as Record<string, HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+
+			if (t === 'posts') {
+				const p = data as Post;
+				f.title.value = p.title;
+				f.content.value = p.content;
+				f.prompt_image_posts.value = p.image_url ?? '';
+				f.promo_code.value = p.promo_code ?? '';
+				f.discount_badge.value = p.discount_badge ?? '';
+				f.valid_until.value = p.valid_until ?? '';
+			} else if (t === 'categories') {
+				const c = data as Category;
+				f.cat_name.value = c.name;
+				f.cat_slug.value = c.slug;
+				f.cat_display_order.value = String(c.display_order ?? 0);
+				f.cat_is_active.checked = c.is_active;
+			} else {
+				const p = data as Product;
+				refrescarCategoriasSelect();
+				f.category_id.value = p.category_id ?? '';
+				f.name.value = p.name;
+				f.description.value = p.description ?? '';
+				f.price.value = String(p.price);
+				f.prompt_image_products.value = p.image_url ?? '';
+				f.is_available.checked = p.is_available;
+			}
+			verCampos(t);
+			modal.showModal();
+		} catch (err) {
+			toastMsg('No pude cargar el elemento a editar.');
+			console.error('[admin-editar]', err);
+		}
+	}
+
+	function verCampos(t: TipoItem) {
+		for (const grupo of ['posts', 'products', 'categories'] as const) {
+			const caja = document.querySelector<HTMLElement>(`[data-fields="${grupo}"]`)!;
+			const ocultar = grupo !== t;
+			caja.hidden = ocultar;
+			// Campos ocultos deshabilitados: sin validación nativa y fuera del FormData.
+			caja.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select')
+				.forEach((el) => { el.disabled = ocultar; });
+		}
+		document.querySelector('[data-solo-media]')!.hidden = t === 'categories';
+	}
+
+	async function eliminar(t: TipoItem, id: string) {
+		if (!confirm('¿Eliminar este elemento? No se puede deshacer.')) return;
+		try {
+			const { error } = await supabase.from(t).delete().eq('id', id);
+			if (error) throw error;
+			toastMsg('Eliminado con amor ♥');
+			cargar();
+			cargarKPIs();
+		} catch (err) {
+			toastMsg('No se pudo eliminar. ¿Iniciaste sesión como admin?');
+			console.error('[admin-eliminar]', err);
+		}
+	}
+
+	async function cambiarDisponibilidad(id: string, valor: boolean) {
+		try {
+			const { error } = await supabase.from('products').update({ is_available: !valor }).eq('id', id);
+			if (error) throw error;
+			cargar();
+		} catch (err) {
+			toastMsg('No se pudo cambiar la disponibilidad.');
+			console.error('[admin-disp]', err);
+		}
+	}
+
+	document.querySelectorAll('[data-tab]').forEach((b) =>
+		(b as HTMLElement).addEventListener('click', () => verTab((b as HTMLElement).dataset.tab as TipoItem))
+	);
+	document.querySelectorAll('[data-nuevo]').forEach((b) =>
+		(b as HTMLElement).addEventListener('click', () => abrirNuevo((b as HTMLElement).dataset.nuevo as TipoItem))
+	);
+
+	postsList.addEventListener('click', (e) => despacharAcciones(e));
+	productsList.addEventListener('click', (e) => despacharAcciones(e));
+	categoriesList.addEventListener('click', (e) => despacharAcciones(e));
+
+	function despacharAcciones(e: Event) {
+		const el = e.target as HTMLElement;
+		const edit = el.closest<HTMLElement>('[data-edit]');
+		const del = el.closest<HTMLElement>('[data-del]');
+		const disp = el.closest<HTMLElement>('[data-disp]');
+		if (edit) abrirEditar(edit.dataset.edit as TipoItem, edit.dataset.id!);
+		else if (del) eliminar(del.dataset.del as TipoItem, del.dataset.id!);
+		else if (disp) cambiarDisponibilidad(disp.dataset.disp!, disp.dataset.val === 'true');
+	}
+
+	/* ---------- Subida de imagen a Supabase Storage ---------- */
+	async function subirImagen(file: File): Promise<string | null> {
+		uploadMsg.textContent = 'Subiendo imagen…';
+		uploadMsg.removeAttribute('hidden');
+		try {
+			const ext = file.name.split('.').pop() || 'png';
+			const ruta = `panel/${Date.now().toString(36)}.${ext}`;
+			const { error } = await supabase.storage.from('product-images').upload(ruta, file, { upsert: false });
+			if (error) throw error;
+			const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(ruta);
+			uploadMsg.textContent = '¡Imagen subida!';
+			return publicUrl;
+		} catch (err) {
+			console.error('[storage]', err);
+			uploadMsg.textContent = 'La imagen no subió (revisa políticas de Storage); usaré el campo URL si lo llenaste.';
+			return null;
+		}
+	}
+
+	/* ---------- Guardar (crear o actualizar) ---------- */
+	form.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const t = form.dataset.itemType as TipoItem;
+		const fd = new FormData(form);
+
+		try {
+			const archivo = fd.get('image_file') as File | null;
+
+			if (t === 'categories') {
+				const nombre = String(fd.get('cat_name') || '');
+				const slug = String(fd.get('cat_slug') || '').trim() || slugify(nombre);
+				const payload = {
+					name: nombre,
+					slug,
+					display_order: Number(fd.get('cat_display_order')) || 0,
+					is_active: (form.elements.namedItem('cat_is_active') as HTMLInputElement).checked,
+				};
+				const { error } = editandoId
+					? await supabase.from('categories').update(payload).eq('id', editandoId)
+					: await supabase.from('categories').insert(payload);
+				if (error) throw error;
+			} else {
+				let imagenUrl: string | null = String(fd.get(t === 'posts' ? 'prompt_image_posts' : 'prompt_image_products') || '') || null;
+				if (archivo && archivo.size > 0) imagenUrl = (await subirImagen(archivo)) ?? imagenUrl;
+
+				if (t === 'posts') {
+					const titulo = String(fd.get('title') || '');
+					const payload = {
+						title: titulo,
+						content: String(fd.get('content') || ''),
+						image_url: imagenUrl,
+						promo_code: String(fd.get('promo_code') || '').toUpperCase() || null,
+						discount_badge: String(fd.get('discount_badge') || '') || null,
+						valid_until: String(fd.get('valid_until') || '') || null,
+					};
+					const { error } = editandoId
+						? await supabase.from('posts').update(payload).eq('id', editandoId)
+						: await supabase.from('posts').insert({ ...payload, slug: slugify(titulo) + '-' + Date.now().toString(36) });
+					if (error) throw error;
+				} else {
+					const payload = {
+						category_id: String(fd.get('category_id') || '') || null,
+						name: String(fd.get('name') || ''),
+						description: String(fd.get('description') || '') || null,
+						price: Number(fd.get('price')),
+						image_url: imagenUrl,
+						is_available: (form.elements.namedItem('is_available') as HTMLInputElement).checked,
+					};
+					const { error } = editandoId
+						? await supabase.from('products').update(payload).eq('id', editandoId)
+						: await supabase.from('products').insert(payload);
+					if (error) throw error;
+				}
+			}
+
+			editandoId = null;
+			form.reset();
+			modal.close();
+			toastMsg('Guardado con amor ♥');
+			cargar();
+			cargarKPIs();
+		} catch (err) {
+			console.error('[admin-guardar]', err);
+			const e = err as { message?: string; code?: string; details?: string; hint?: string };
+			const detalle = [e.code, e.message, e.details, e.hint].filter(Boolean).join(' · ') || String(err);
+			crudMsg.textContent = detalle;
+			crudMsg.removeAttribute('hidden');
+			toastMsg('No se pudo guardar. ¿Iniciaste sesión como admin?');
+		}
+	});
+
+	document.querySelector('#crud-close')!.addEventListener('click', () => modal.close());
+	document.querySelector('#crud-cancel')!.addEventListener('click', () => modal.close());
+	modal.addEventListener('click', (e) => { if (e.target === modal) modal.close(); });
+
+	/* ---------- Sesión y roles ---------- */
+	async function iniciarSesion(email: string, password: string) {
+		const { error } = await supabase.auth.signInWithPassword({ email, password });
+		if (error) {
+			const msg = document.querySelector<HTMLElement>('#login-msg')!;
+			msg.textContent = error.message;
+			msg.removeAttribute('hidden');
+			return;
+		}
+		await mostrarPanelSegunRol();
+	}
+
+	async function mostrarPanelSegunRol() {
+		const { data: { user } } = await supabase.auth.getUser();
+		if (!user) { salir(false); return; }
+
+		const { data: profile } = await supabase.from('profiles').select('full_name, role').eq('id', user.id).maybeSingle<{ full_name: string | null; role: string }>();
+
+		if (!profile || !['admin', 'staff'].includes(profile.role)) {
+			loginCard.setAttribute('hidden', '');
+			deniedCard.removeAttribute('hidden');
+			return;
+		}
+
+		const iniciales = (profile.full_name ?? user.email ?? 'AA')
+			.split(/\s+/).slice(0, 2).map((s) => s[0]?.toUpperCase() ?? '').join('') || 'AA';
+		document.querySelector<HTMLElement>('#avatar')!.textContent = iniciales === '' ? 'AA' : iniciales;
+		document.querySelector<HTMLElement>('#estado-texto')!.textContent = 'Supabase conectado';
+
+		loginScreen.setAttribute('hidden', '');
+		app.removeAttribute('hidden');
+		verTab('posts');
+		cargarKPIs();
+	}
+
+	function salir(refrescar = true) {
+		supabase.auth.signOut();
+		app.setAttribute('hidden', '');
+		deniedCard.setAttribute('hidden', '');
+		loginCard.removeAttribute('hidden');
+		loginScreen.removeAttribute('hidden');
+		document.querySelector<HTMLElement>('#estado-texto')!.textContent = 'Sin conexión';
+		if (refrescar) document.querySelector<HTMLFormElement>('#login-form')!.reset();
+	}
+
+	document.querySelector<HTMLFormElement>('#login-form')!.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const fd = new FormData(e.currentTarget as HTMLFormElement);
+		await iniciarSesion(String(fd.get('email')), String(fd.get('password')));
+	});
+
+	document.querySelector('#denied-logout')!.addEventListener('click', () => salir());
+
+	const { data: { session } } = await supabase.auth.getSession();
+	if (session) await mostrarPanelSegunRol();
+</script>
+
+<style>
+	/* §8 Animaciones, §9 CSS personalizado */
+	html, body { height: 100%; }
+	::selection { background: #dc2626; color: #fff; }
+	::-webkit-scrollbar { width: 10px; }
+	::-webkit-scrollbar-thumb { background: #e9dcc4; border-radius: 10px; border: 3px solid #fffdf9; }
+
+	@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+	.rise { animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+	.d1 { animation-delay: 0.08s; }
+	.d2 { animation-delay: 0.16s; }
+	.d3 { animation-delay: 0.24s; }
+
+	@keyframes beat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.14); } 28% { transform: scale(1); } 42% { transform: scale(1.1); } 70% { transform: scale(1); } }
+	.beat { animation: beat 2.6s ease-in-out infinite; }
+
+	dialog::backdrop { background: rgba(69, 26, 3, 0.55); backdrop-filter: blur(3px); }
+
+	@media (prefers-reduced-motion: reduce) {
+		.rise, .beat { animation: none; }
+	}
+</style>

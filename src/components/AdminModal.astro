@@ -1,0 +1,255 @@
+<button
+  id="admin-fab"
+  hidden
+  class="fixed bottom-6 right-6 z-60 grid size-13 place-items-center rounded-full bg-brand-chocolate text-brand-gold text-2xl shadow-2xl hover:rotate-90 hover:scale-110 transition-transform"
+  title="Panel Admin"
+  aria-label="Abrir modo admin"
+>
+  <i class="fa-solid fa-pen"></i>
+</button>
+
+<dialog
+  id="admin-modal"
+  class="rounded-3xl bg-brand-warmIvory p-8 w-[min(440px,92%)] shadow-2xl backdrop:bg-brand-chocolate/60 backdrop:backdrop-blur-sm font-sans"
+>
+  <button
+    id="admin-close"
+    aria-label="Cerrar"
+    class="absolute top-2 right-3 text-3xl text-brand-chocolate/50 hover:text-brand-red"
+    >×</button
+  >
+  <h2 class="font-serif text-2xl font-extrabold text-brand-chocolate">
+    Modo amor-admin <i class="fa-solid fa-heart text-brand-red"></i>
+  </h2>
+
+  <form id="admin-form" class="mt-6 grid gap-4">
+    <label class="grid gap-1 text-sm font-bold text-brand-chocolate">
+      ¿Qué vas a publicar?
+      <select
+        id="admin-destino"
+        name="destino"
+        required
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none"
+      >
+        <option value="products">Producto (aparece en el Menú)</option>
+        <option value="posts">Promo (aparece en Promos)</option>
+      </select>
+    </label>
+
+    <div id="campos-producto" class="grid gap-4">
+      <select
+        name="product_category_id"
+        required
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none"
+      >
+        <option value="">Categoría…</option>
+      </select>
+      <input
+        name="product_name"
+        placeholder="Nombre — Bubble Waffle Kinder Bueno"
+        maxlength="150"
+        required
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none"
+      />
+      <textarea
+        name="product_description"
+        rows="2"
+        placeholder="Descripción del producto"
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none resize-y"
+      ></textarea>
+      <input
+        name="product_price"
+        type="number"
+        step="0.01"
+        min="0"
+        placeholder="Precio — 125.00"
+        required
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none"
+      />
+      <input
+        name="product_image_url"
+        placeholder="URL de imagen"
+        maxlength="500"
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none"
+      />
+    </div>
+
+    <div id="campos-post" hidden class="grid gap-4">
+      <input
+        name="post_title"
+        placeholder="Título — 2x1 Parejas"
+        maxlength="150"
+        required
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none"
+      />
+      <textarea
+        name="post_content"
+        rows="2"
+        placeholder="Contenido de la publicación"
+        required
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none resize-y"
+      ></textarea>
+      <input
+        name="post_image_url"
+        placeholder="URL de imagen (opcional)"
+        maxlength="500"
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none"
+      />
+      <input
+        name="post_promo_code"
+        placeholder="Código — AMOR2X1"
+        maxlength="50"
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none uppercase"
+      />
+      <input
+        name="post_discount_badge"
+        placeholder="Badge — 2x1 / -15% / 50%"
+        maxlength="50"
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none"
+      />
+      <input
+        name="post_valid_until"
+        type="date"
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none"
+      />
+    </div>
+
+    <button
+      type="submit"
+      class="bg-brand-red text-white hover:bg-brand-darkRed font-bold rounded-full px-6 py-3 transition-colors shadow-lg shadow-brand-red/20"
+    >
+      Publicar con amor
+    </button>
+  </form>
+
+  <p
+    id="admin-msg"
+    class="text-center text-sm font-bold text-brand-red mt-4"
+    hidden
+  >
+  </p>
+</dialog>
+
+<script>
+  import { supabase } from "../lib/supabase.js";
+
+  const fab = document.querySelector("#admin-fab")!;
+  const modal = document.querySelector<HTMLDialogElement>("#admin-modal")!;
+  const form = document.querySelector<HTMLFormElement>("#admin-form")!;
+  const msg = document.querySelector<HTMLElement>("#admin-msg")!;
+  const camposProducto =
+    document.querySelector<HTMLElement>("#campos-producto")!;
+  const camposPost = document.querySelector<HTMLElement>("#campos-post")!;
+  const selectDestino =
+    document.querySelector<HTMLSelectElement>("#admin-destino")!;
+  const selectCategoria = document.querySelector<HTMLSelectElement>(
+    'select[name="product_category_id"]',
+  )!;
+
+  // Solo ve el Panel Admin quien tenga sesión con rol admin/staff en public.profiles.
+  async function autorizado(): Promise<boolean> {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return false;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single<{ role: string }>();
+    return profile?.role === "admin" || profile?.role === "staff";
+  }
+
+  async function revisarAcceso() {
+    if (await autorizado()) fab.removeAttribute("hidden");
+    else fab.setAttribute("hidden", "");
+  }
+
+  function slugify(t: string): string {
+    return (
+      t
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "") || "post"
+    );
+  }
+
+  fab.addEventListener("click", async () => {
+    try {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name")
+        .order("display_order");
+      if (error) throw error;
+      selectCategoria.innerHTML =
+        '<option value="">Categoría…</option>' +
+        ((data as { id: string; name: string }[]) ?? [])
+          .map((c) => `<option value="${c.id}">${c.name}</option>`)
+          .join("");
+    } catch (err) {
+      console.error("[admin-categorias]", err);
+    }
+    modal.showModal();
+  });
+
+  function mostrar(texto: string) {
+    msg.textContent = texto;
+    msg.removeAttribute("hidden");
+    setTimeout(() => msg.setAttribute("hidden", ""), 3000);
+  }
+
+  selectDestino.addEventListener("change", () => {
+    camposProducto.hidden = selectDestino.value !== "products";
+    camposPost.hidden = selectDestino.value !== "posts";
+  });
+
+  document
+    .querySelector("#admin-close")!
+    .addEventListener("click", () => modal.close());
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.close();
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const destino = selectDestino.value;
+    const fd = new FormData(form);
+
+    try {
+      if (destino === "products") {
+        const { error } = await supabase.from("products").insert({
+          category_id: String(fd.get("product_category_id") || "") || null,
+          name: String(fd.get("product_name") || ""),
+          description: String(fd.get("product_description") || "") || null,
+          price: Number(fd.get("product_price")),
+          image_url: String(fd.get("product_image_url") || "") || null,
+          is_available: true,
+        });
+        if (error) throw error;
+      } else {
+        const titulo = String(fd.get("post_title") || "");
+        const { error } = await supabase.from("posts").insert({
+          title: titulo,
+          slug: slugify(titulo) + "-" + Date.now().toString(36),
+          content: String(fd.get("post_content") || ""),
+          image_url: String(fd.get("post_image_url") || "") || null,
+          promo_code:
+            String(fd.get("post_promo_code") || "").toUpperCase() || null,
+          discount_badge: String(fd.get("post_discount_badge") || "") || null,
+          valid_until: String(fd.get("post_valid_until") || "") || null,
+        });
+        if (error) throw error;
+      }
+      form.reset();
+      mostrar("¡Publicado con cariño! Ya aparece en el sitio.");
+    } catch (err) {
+      mostrar("No se pudo publicar — revisa RLS / claves de Supabase.");
+      console.error("[admin]", err);
+    }
+  });
+
+  await revisarAcceso();
+  supabase.auth.onAuthStateChange(() => revisarAcceso());
+</script>
