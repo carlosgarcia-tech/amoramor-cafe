@@ -1,6 +1,9 @@
 ---
-// Página principal. La vitrina 2.5D es el corazón del scroll;
-// los datos vivos llegan de Supabase desde el navegador.
+/*
+ / — Landing pública (prerenderizada).
+ Secciones definidas por componentes; el menú, promos y sucursales llegan
+ desde Supabase en el navegador (lectura pública por RLS, vía esc()).
+*/
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Hero from '../components/Hero.astro';
