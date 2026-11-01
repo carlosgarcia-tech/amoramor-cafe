@@ -1,4 +1,6 @@
 ---
+// SSR sí para poder hacer la puerta de server en el middleware (cookies httpOnly).
+export const prerender = false;
 /*
  Admin Panel — Amor Amor Café
  Rediseño según DISENO_Admin_AmorAmorCafe.md: sidebar rojo 280px, header sticky
@@ -96,6 +98,10 @@ import Layout from '../layouts/Layout.astro';
 						<svg class="size-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
 						<span>Categorías</span>
 					</button>
+					<button type="button" data-tab="branches" class="nav-link w-full">
+						<svg class="size-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+						<span>Sucursales</span>
+					</button>
 				</nav>
 			</div>
 			<div class="text-center">
@@ -138,6 +144,7 @@ import Layout from '../layouts/Layout.astro';
 				<button type="button" data-tab="posts" class="chip-tab shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors">Novedades</button>
 				<button type="button" data-tab="products" class="chip-tab shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors">Menú</button>
 				<button type="button" data-tab="categories" class="chip-tab shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors">Categorías</button>
+				<button type="button" data-tab="branches" class="chip-tab shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors">Sucursales</button>
 			</nav>
 
 			<!-- CONTENIDO (scroll propio) -->
@@ -214,6 +221,20 @@ import Layout from '../layouts/Layout.astro';
 							<div id="products-list" class="mt-6 space-y-4"></div>
 							<p class="mt-6 text-center font-serif text-base italic text-brand-choc/55">precio y disponibilidad en vivo desde Supabase</p>
 						</div>
+					</section>
+
+					<section id="seccion-branches" hidden class="rise">
+						<div class="flex flex-wrap items-center justify-between gap-4">
+							<div>
+								<h2 class="font-mont text-3xl font-black tracking-tight text-brand-choc">Nuestras <span class="text-brand-red">sucursales</span></h2>
+								<p class="font-serif mt-1 text-[19px] text-brand-choc/75">Cada local, con su dirección y su corazón</p>
+							</div>
+							<button type="button" data-nuevo="branches"
+								class="rounded-full bg-brand-red px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 active:scale-95 [box-shadow:0_12px_26px_-10px_rgba(220,38,38,.5)]">
+								<i class="fa-solid fa-plus mr-1"></i>Nueva sucursal
+							</button>
+						</div>
+						<div id="branches-list" class="mt-6 grid gap-6 xl:grid-cols-2"></div>
 					</section>
 
 					<!-- CATEGORÍAS (derecha 3 col) + CITA roja (§6.8) -->
@@ -310,6 +331,11 @@ import Layout from '../layouts/Layout.astro';
 						class="mt-1.5 w-full resize-y rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none"></textarea>
 				</label>
 				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Ingredientes (separados por coma)
+					<textarea name="ingredients" rows="2" placeholder="tortilla de harina, nutella, queso crema, fresas"
+						class="mt-1.5 w-full resize-y rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none"></textarea>
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
 					Precio (MXN)
 					<input name="price" type="number" step="0.01" min="0" placeholder="125.00" required
 						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal tabular-nums text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
@@ -320,6 +346,53 @@ import Layout from '../layouts/Layout.astro';
 				</label>
 				<input name="prompt_image_products" placeholder="Image URL (https://…)" maxlength="500"
 					class="w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+			</div>
+
+			<div data-fields="branches" hidden class="grid gap-4">
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Nombre del local
+					<input name="b_name" placeholder="Sucursal Centro" maxlength="100" required
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Dirección
+					<input name="b_address" placeholder="Calle del Amor 123, Centro" maxlength="500" required
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+				</label>
+				<div class="grid grid-cols-2 gap-4">
+					<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+						Teléfono
+						<input name="b_phone" type="tel" placeholder="55 5555 5555" maxlength="50"
+							class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+					</label>
+					<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+						Horario
+						<input name="b_schedule" placeholder="Lun–Sáb 8:00–21:00" maxlength="200" required
+							class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+					</label>
+				</div>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Estatus
+					<select name="b_status" required
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc focus:border-brand-red outline-none">
+						<option value="active">Abierta</option>
+						<option value="upcoming">Próximamente</option>
+						<option value="closed">Cerrada</option>
+					</select>
+				</label>
+				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
+					Link de Google Maps (opcional)
+					<input name="b_map_url" placeholder="https://maps.app.goo.gl/…" maxlength="500"
+						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
+				</label>
+				<div class="flex flex-wrap gap-5 font-mont text-sm font-bold text-brand-choc">
+					<label class="flex items-center gap-2">
+						<input name="b_has_wifi" type="checkbox" class="size-4 accent-brand-red" /> WiFi
+					</label>
+					<label class="flex items-center gap-2">
+						<input name="b_pet_friendly" type="checkbox" class="size-4 accent-brand-red" /> Pet friendly
+					</label>
+				</div>
 			</div>
 
 			<div data-fields="categories" hidden class="grid gap-4">
@@ -377,14 +450,19 @@ import Layout from '../layouts/Layout.astro';
 	};
 	type Product = {
 		id: string; category_id: string | null; name: string;
-		description: string | null; price: number; image_url: string | null;
+		description: string | null; ingredients: string | null; price: number; image_url: string | null;
 		is_available: boolean; categories: { name: string } | null;
 	};
 	type Category = {
 		id: string; name: string; slug: string;
 		display_order: number; is_active: boolean;
 	};
-	type TipoItem = 'posts' | 'products' | 'categories';
+	type Branch = {
+		id: string; name: string; address: string; phone: string | null;
+		schedule: string; status: string; map_url: string | null;
+		has_wifi: boolean; is_pet_friendly: boolean;
+	};
+	type TipoItem = 'posts' | 'products' | 'categories' | 'branches';
 
 	/* ---------- Referencias ---------- */
 	const loginScreen = document.querySelector<HTMLElement>('#login-screen')!;
@@ -399,6 +477,7 @@ import Layout from '../layouts/Layout.astro';
 	const postsList = document.querySelector<HTMLElement>('#posts-list')!;
 	const productsList = document.querySelector<HTMLElement>('#products-list')!;
 	const categoriesList = document.querySelector<HTMLElement>('#categories-list')!;
+	const branchesList = document.querySelector<HTMLElement>('#branches-list')!;
 	const toast = document.querySelector<HTMLElement>('#toast')!;
 	const busqueda = document.querySelector<HTMLInputElement>('#busqueda')!;
 
@@ -463,6 +542,7 @@ import Layout from '../layouts/Layout.astro';
 		document.querySelector('#seccion-posts')!.hidden = nuevo !== 'posts';
 		document.querySelector('#seccion-products')!.hidden = nuevo !== 'products';
 		document.querySelector('#seccion-categories')!.hidden = nuevo !== 'categories';
+		document.querySelector('#seccion-branches')!.hidden = nuevo !== 'branches';
 		pintarActivos(nuevo);
 		cargar();
 	}
@@ -471,6 +551,7 @@ import Layout from '../layouts/Layout.astro';
 	async function cargar() {
 		if (tipo === 'posts') await cargarPosts();
 		else if (tipo === 'categories') await cargarCategorias();
+		else if (tipo === 'branches') await cargarSucursales();
 		else await cargarProductos();
 	}
 
@@ -623,6 +704,47 @@ import Layout from '../layouts/Layout.astro';
 		sel.innerHTML = '<option value="">Categoría…</option>' + categorias.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
 	}
 
+	/* ---------- Sucursales: tarjeta + carga (§6.x) ---------- */
+	function filaSucursal(b: Branch): string {
+		const badgeEstado = {
+			active: 'bg-green-100 text-green-700 rounded-full px-3 py-1 text-xs font-bold',
+			upcoming: 'bg-brand-gold/15 text-brand-gold rounded-full px-3 py-1 text-xs font-bold',
+			closed: 'bg-brand-choc/10 text-brand-choc/55 rounded-full px-3 py-1 text-xs font-bold',
+		}[b.status] ?? ('bg-brand-choc/10 text-brand-choc/55 rounded-full px-3 py-1 text-xs font-bold');
+		const textoEstado = b.status === 'active' ? 'Abierta' : b.status === 'upcoming' ? 'Próximamente' : 'Cerrada';
+		return `
+			<article class="rounded-[28px] border border-brand-choc/10 bg-brand-ivory p-6 [box-shadow:0_12px_30px_-18px_rgba(69,26,3,.35)]">
+				<div class="flex items-start justify-between gap-3">
+					<div>
+						<span class="font-mont text-lg font-extrabold text-brand-choc">${esc(b.name)}</span>
+						<p class="font-serif mt-1 text-[15px] text-brand-choc/75">${esc(b.address)}</p>
+					</div>
+					<span class="${badgeEstado}">${textoEstado}</span>
+				</div>
+				<p class="mt-3 font-mont text-sm text-brand-choc/70">${esc(b.schedule)}${b.phone ? ' · ' + esc(b.phone) : ''}</p>
+				${b.has_wifi || b.is_pet_friendly ? `<div class="mt-2 flex gap-2 font-mont text-xs font-bold text-brand-choc/60">${b.has_wifi ? '<span class="rounded-full bg-brand-choc/5 px-2.5 py-1">WiFi</span>' : ''}${b.is_pet_friendly ? '<span class="rounded-full bg-brand-choc/5 px-2.5 py-1">Pet friendly</span>' : ''}</div>` : ''}
+				<div class="mt-4 flex items-center justify-end gap-4">
+					<button data-edit="branches" data-id="${b.id}" class="text-sm font-bold text-brand-red underline decoration-2 underline-offset-4 transition hover:opacity-70">Editar</button>
+					<button data-del="branches" data-id="${b.id}" class="text-sm font-bold text-brand-choc/50 transition hover:text-brand-red">Eliminar</button>
+				</div>
+			</article>
+		`;
+	}
+
+	async function cargarSucursales() {
+		branchesList.innerHTML = '<p class="text-center font-serif text-lg italic text-brand-choc/60">Cargando locales…</p>';
+		try {
+			const { data, error } = await supabase.from('branches').select('*').order('name');
+			if (error) throw error;
+			const sucursales = (data as Branch[]) ?? [];
+			branchesList.innerHTML = sucursales.length
+				? sucursales.map(filaSucursal).join('')
+				: '<p class="col-span-full text-center font-serif text-xl italic text-brand-choc/60">Aún no hay locales: crea la primera sucursal.</p>';
+		} catch (err) {
+			branchesList.innerHTML = avisoCarga(err);
+		}
+	}
+
 	/* ---------- Búsqueda en vivo (§10) ---------- */
 	function aplicarBusqueda() {
 		if (tipo !== 'posts') return;
@@ -656,13 +778,16 @@ import Layout from '../layouts/Layout.astro';
 		crudMsg.setAttribute('hidden', '');
 		crudTitle.innerHTML = t === 'posts' ? 'Nuevo <span class="text-brand-red">cupón</span>'
 			: t === 'products' ? 'Nuevo <span class="text-brand-red">producto</span>'
+			: t === 'branches' ? 'Nueva <span class="text-brand-red">sucursal</span>'
 			: 'Nueva <span class="text-brand-red">categoría</span>';
-		document.querySelector('#crud-submit')!.textContent = t === 'posts' ? 'Guardar cupón' : t === 'products' ? 'Guardar producto' : 'Guardar categoría';
+		document.querySelector('#crud-submit')!.textContent = t === 'posts' ? 'Guardar cupón'
+			: t === 'products' ? 'Guardar producto'
+			: t === 'branches' ? 'Guardar sucursal'
+			: 'Guardar categoría';
 		verCampos(t);
 		refrescarCategoriasSelect();
 		modal.showModal();
 	}
-
 	async function abrirEditar(t: TipoItem, id: string) {
 		try {
 			const tablaBien = t === 'products'
@@ -689,12 +814,23 @@ import Layout from '../layouts/Layout.astro';
 				f.cat_slug.value = c.slug;
 				f.cat_display_order.value = String(c.display_order ?? 0);
 				f.cat_is_active.checked = c.is_active;
+			} else if (t === 'branches') {
+				const b = data as Branch;
+				f.b_name.value = b.name;
+				f.b_address.value = b.address;
+				f.b_phone.value = b.phone ?? '';
+				f.b_schedule.value = b.schedule;
+				f.b_status.value = b.status ?? 'active';
+				f.b_map_url.value = b.map_url ?? '';
+				f.b_has_wifi.checked = b.has_wifi;
+				f.b_pet_friendly.checked = b.is_pet_friendly;
 			} else {
 				const p = data as Product;
 				refrescarCategoriasSelect();
 				f.category_id.value = p.category_id ?? '';
 				f.name.value = p.name;
 				f.description.value = p.description ?? '';
+				f.ingredients.value = p.ingredients ?? '';
 				f.price.value = String(p.price);
 				f.prompt_image_products.value = p.image_url ?? '';
 				f.is_available.checked = p.is_available;
@@ -708,7 +844,7 @@ import Layout from '../layouts/Layout.astro';
 	}
 
 	function verCampos(t: TipoItem) {
-		for (const grupo of ['posts', 'products', 'categories'] as const) {
+		for (const grupo of ['posts', 'products', 'categories', 'branches'] as const) {
 			const caja = document.querySelector<HTMLElement>(`[data-fields="${grupo}"]`)!;
 			const ocultar = grupo !== t;
 			caja.hidden = ocultar;
@@ -754,6 +890,7 @@ import Layout from '../layouts/Layout.astro';
 	postsList.addEventListener('click', (e) => despacharAcciones(e));
 	productsList.addEventListener('click', (e) => despacharAcciones(e));
 	categoriesList.addEventListener('click', (e) => despacharAcciones(e));
+	branchesList.addEventListener('click', (e) => despacharAcciones(e));
 
 	function despacharAcciones(e: Event) {
 		const el = e.target as HTMLElement;
@@ -806,6 +943,21 @@ import Layout from '../layouts/Layout.astro';
 					? await supabase.from('categories').update(payload).eq('id', editandoId)
 					: await supabase.from('categories').insert(payload);
 				if (error) throw error;
+			} else if (t === 'branches') {
+				const payload = {
+					name: String(fd.get('b_name') || ''),
+					address: String(fd.get('b_address') || ''),
+					phone: String(fd.get('b_phone') || '') || null,
+					schedule: String(fd.get('b_schedule') || ''),
+					status: String(fd.get('b_status') || 'active'),
+					map_url: String(fd.get('b_map_url') || '') || null,
+					has_wifi: fd.get('b_has_wifi') === 'on',
+					is_pet_friendly: fd.get('b_pet_friendly') === 'on',
+				};
+				const { error } = editandoId
+					? await supabase.from('branches').update(payload).eq('id', editandoId)
+					: await supabase.from('branches').insert(payload);
+				if (error) throw error;
 			} else {
 				let imagenUrl: string | null = String(fd.get(t === 'posts' ? 'prompt_image_posts' : 'prompt_image_products') || '') || null;
 				if (archivo && archivo.size > 0) imagenUrl = (await subirImagen(archivo)) ?? imagenUrl;
@@ -829,6 +981,7 @@ import Layout from '../layouts/Layout.astro';
 						category_id: String(fd.get('category_id') || '') || null,
 						name: String(fd.get('name') || ''),
 						description: String(fd.get('description') || '') || null,
+						ingredients: String(fd.get('ingredients') || '') || null,
 						price: Number(fd.get('price')),
 						image_url: imagenUrl,
 						is_available: (form.elements.namedItem('is_available') as HTMLInputElement).checked,
