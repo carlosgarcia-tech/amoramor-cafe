@@ -11,10 +11,9 @@ if (!supabaseUrl || !supabasePublishableKey) {
   );
 }
 
-/*
- Sesión en cookies (no localStorage): el refresh lo hace el middleware de
- Astro con cookies httpOnly Set-Cookie; este cliente comparte esas cookies.
-*/
+// Cliente de navegador: sesión en cookies (no localStorage). El refresh lo
+// hace el middleware de Astro con cookies httpOnly; este cliente comparte
+// esas cookies.
 export const supabase = createBrowserClient(supabaseUrl, supabasePublishableKey, {
   cookieOptions: { secure: true, sameSite: 'lax' },
   // prettier-ignore

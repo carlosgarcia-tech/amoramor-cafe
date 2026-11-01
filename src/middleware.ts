@@ -1,8 +1,8 @@
-/*
- Middleware de Astro: refresca la sesión de Supabase y guarda los tokens en
- cookies httpOnly (Set-Cookie del servidor). El JS del navegador ya no puede
- leer el token desde localStorage, y /admin exige sesión real de server.
-*/
+/**
+ * Middleware de Astro: refresca la sesión de Supabase y guarda los tokens en
+ * cookies httpOnly (Set-Cookie del servidor). El JS del navegador ya no puede
+ * leer el token desde localStorage, y /admin exige sesión real de server.
+ */
 import { createServerClient, parseCookieHeader } from '@supabase/ssr';
 import { defineMiddleware } from 'astro:middleware';
 
