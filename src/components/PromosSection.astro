@@ -19,6 +19,7 @@
 
 <script>
 	import { supabase } from '../lib/supabase.js';
+	import { esc } from '../lib/esc.js';
 
 	type Post = {
 		id: string;
@@ -39,19 +40,19 @@
 			: null;
 		return `
 			<article class="flex flex-col rounded-3xl border-2 border-brand-gold bg-brand-rose/25 p-5">
-				${p.image_url ? `<img src="${p.image_url}" alt="${p.title}" class="h-40 w-full rounded-2xl object-cover mb-4" loading="lazy" />` : ''}
+				${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.title)}" class="h-40 w-full rounded-2xl object-cover mb-4" loading="lazy" />` : ''}
 				<div class="flex items-start justify-between gap-2">
-					<h3 class="font-serif text-lg font-bold text-brand-chocolate">${p.title}</h3>
-					${p.discount_badge ? `<span class="shrink-0 rounded-full bg-brand-gold/20 text-brand-caramel text-xs font-extrabold px-2.5 py-1">${p.discount_badge}</span>` : ''}
+					<h3 class="font-serif text-lg font-bold text-brand-chocolate">${esc(p.title)}</h3>
+					${p.discount_badge ? `<span class="shrink-0 rounded-full bg-brand-gold/20 text-brand-caramel text-xs font-extrabold px-2.5 py-1">${esc(p.discount_badge)}</span>` : ''}
 				</div>
-				<p class="mt-2 text-sm text-brand-chocolate/70">${p.content}</p>
+				<p class="mt-2 text-sm text-brand-chocolate/70">${esc(p.content)}</p>
 				<div class="mt-auto pt-4">
 					${p.promo_code ? `
-					<code class="inline-block rounded-lg bg-brand-chocolate text-brand-gold px-3 py-1.5 tracking-widest">${p.promo_code}</code>
-					<button type="button" class="promo-copy ml-2 rounded-full bg-brand-red px-4 py-1.5 text-sm font-bold text-white hover:bg-brand-darkRed transition-colors" data-codigo="${p.promo_code}">
+					<code class="inline-block rounded-lg bg-brand-chocolate text-brand-gold px-3 py-1.5 tracking-widest">${esc(p.promo_code)}</code>
+					<button type="button" class="promo-copy ml-2 rounded-full bg-brand-red px-4 py-1.5 text-sm font-bold text-white hover:bg-brand-darkRed transition-colors" data-codigo="${esc(p.promo_code)}">
 						<i class="fa-solid fa-copy mr-1"></i>Copiar
 					</button>` : ''}
-					${vigente ? `<p class="text-xs text-brand-chocolate/50 mt-3">${vigente}</p>` : ''}
+					${vigente ? `<p class="text-xs text-brand-chocolate/50 mt-3">${esc(vigente)}</p>` : ''}
 				</div>
 			</article>
 		`;

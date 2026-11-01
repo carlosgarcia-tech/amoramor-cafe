@@ -37,3 +37,28 @@
 	--font-brand: "Kaushan Script", "Caveat", cursive; /* wordmark / logo */
 	--font-mont: "Montserrat", Inter, system-ui, sans-serif;
 }
+
+/*
+ Estilo Apple (apple-design skill):
+ — §1 feedback instantáneo al presionar (propiedad `scale`, compone sin pelear con transforms)
+ — §14 respetar prefers-reduced-motion / reduced-transparency / contrast
+*/
+@media (prefers-reduced-motion: no-preference) {
+	button:active { scale: 0.97; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#product-modal[open],
+	#product-modal[open]::backdrop { animation: none; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+	#navbar, #product-modal, #admin-modal, #crud-modal { backdrop-filter: none; }
+	#navbar { background: var(--color-brand-cream); }
+	#product-modal, #admin-modal { background: var(--color-brand-warmIvory); }
+	#crud-modal { background: var(--color-brand-ivory); }
+}
+
+@media (prefers-contrast: more) {
+	#product-modal, #admin-modal, #crud-modal { background: var(--color-brand-warmIvory); border-width: 2px; }
+}
