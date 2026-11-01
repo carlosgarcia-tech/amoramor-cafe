@@ -10,13 +10,13 @@
 
 <dialog
   id="admin-modal"
-  class="rounded-3xl bg-brand-warmIvory p-8 w-[min(440px,92%)] shadow-2xl backdrop:bg-brand-chocolate/60 backdrop:backdrop-blur-sm font-sans"
+  class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-brand-warmIvory/80 backdrop-blur-2xl backdrop-saturate-150 border border-white/60 p-8 w-[min(440px,92%)] shadow-2xl backdrop:bg-brand-chocolate/70 backdrop:backdrop-blur-md font-sans"
 >
   <button
     id="admin-close"
     aria-label="Cerrar"
-    class="absolute top-2 right-3 text-3xl text-brand-chocolate/50 hover:text-brand-red"
-    >×</button
+    class="absolute top-2 right-3 grid size-9 place-items-center rounded-full text-lg text-brand-chocolate/60 transition-colors hover:bg-brand-rose/40 hover:text-brand-red z-10"
+    ><i class="fa-solid fa-xmark"></i></button
   >
   <h2 class="font-serif text-2xl font-extrabold text-brand-chocolate">
     Modo amor-admin <i class="fa-solid fa-heart text-brand-red"></i>
@@ -55,6 +55,12 @@
         name="product_description"
         rows="2"
         placeholder="Descripción del producto"
+        class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none resize-y"
+      ></textarea>
+      <textarea
+        name="product_ingredients"
+        rows="2"
+        placeholder="Ingredientes separados por coma — tortilla de harina, nutella, queso crema, fresas"
         class="rounded-xl border-2 border-brand-rose/60 px-3 py-2 bg-white focus:border-brand-red outline-none resize-y"
       ></textarea>
       <input
@@ -132,6 +138,7 @@
 
 <script>
   import { supabase } from "../lib/supabase.js";
+  import { esc } from "../lib/esc.js";
 
   const fab = document.querySelector("#admin-fab")!;
   const modal = document.querySelector<HTMLDialogElement>("#admin-modal")!;
@@ -186,7 +193,7 @@
       selectCategoria.innerHTML =
         '<option value="">Categoría…</option>' +
         ((data as { id: string; name: string }[]) ?? [])
-          .map((c) => `<option value="${c.id}">${c.name}</option>`)
+          .map((c) => `<option value="${c.id}">${esc(c.name)}</option>`)
           .join("");
     } catch (err) {
       console.error("[admin-categorias]", err);
@@ -225,6 +232,7 @@
           description: String(fd.get("product_description") || "") || null,
           price: Number(fd.get("product_price")),
           image_url: String(fd.get("product_image_url") || "") || null,
+          ingredients: String(fd.get("product_ingredients") || "") || null,
           is_available: true,
         });
         if (error) throw error;
