@@ -401,7 +401,7 @@ import Layout from '../layouts/Layout.astro';
 				</label>
 				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
 					Slug (opcional, se autogenera)
-					<input name="cat_slug" placeholder="bubble-waffles" maxlength="100" lowercase
+					<input name="cat_slug" placeholder="bubble-waffles" maxlength="100"
 						class="mt-1.5 w-full rounded-2xl border-2 border-brand-choc/20 bg-brand-ivory px-4 py-3 font-normal text-brand-choc placeholder:text-brand-choc/45 focus:border-brand-red outline-none" />
 				</label>
 				<label class="grid gap-1 font-mont text-sm font-bold text-brand-choc">
@@ -537,10 +537,10 @@ import Layout from '../layouts/Layout.astro';
 
 	function verTab(nuevo: TipoItem) {
 		tipo = nuevo;
-		document.querySelector('#seccion-posts')!.hidden = nuevo !== 'posts';
-		document.querySelector('#seccion-products')!.hidden = nuevo !== 'products';
-		document.querySelector('#seccion-categories')!.hidden = nuevo !== 'categories';
-		document.querySelector('#seccion-branches')!.hidden = nuevo !== 'branches';
+		document.querySelector<HTMLElement>('#seccion-posts')!.hidden = nuevo !== 'posts';
+		document.querySelector<HTMLElement>('#seccion-products')!.hidden = nuevo !== 'products';
+		document.querySelector<HTMLElement>('#seccion-categories')!.hidden = nuevo !== 'categories';
+		document.querySelector<HTMLElement>('#seccion-branches')!.hidden = nuevo !== 'branches';
 		pintarActivos(nuevo);
 		cargar();
 	}
@@ -810,7 +810,7 @@ import Layout from '../layouts/Layout.astro';
 				f.cat_name.value = c.name;
 				f.cat_slug.value = c.slug;
 				f.cat_display_order.value = String(c.display_order ?? 0);
-				f.cat_is_active.checked = c.is_active;
+				(f.cat_is_active as HTMLInputElement).checked = c.is_active;
 			} else if (t === 'branches') {
 				const b = data as Branch;
 				f.b_name.value = b.name;
@@ -819,8 +819,8 @@ import Layout from '../layouts/Layout.astro';
 				f.b_schedule.value = b.schedule;
 				f.b_status.value = b.status ?? 'active';
 				f.b_map_url.value = b.map_url ?? '';
-				f.b_has_wifi.checked = b.has_wifi;
-				f.b_pet_friendly.checked = b.is_pet_friendly;
+				(f.b_has_wifi as HTMLInputElement).checked = b.has_wifi;
+				(f.b_pet_friendly as HTMLInputElement).checked = b.is_pet_friendly;
 			} else {
 				const p = data as Product;
 				refrescarCategoriasSelect();
@@ -830,7 +830,7 @@ import Layout from '../layouts/Layout.astro';
 				f.ingredients.value = p.ingredients ?? '';
 				f.price.value = String(p.price);
 				f.prompt_image_products.value = p.image_url ?? '';
-				f.is_available.checked = p.is_available;
+				(f.is_available as HTMLInputElement).checked = p.is_available;
 			}
 			verCampos(t);
 			modal.showModal();
@@ -849,7 +849,7 @@ import Layout from '../layouts/Layout.astro';
 			caja.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select')
 				.forEach((el) => { el.disabled = ocultar; });
 		}
-		document.querySelector('[data-solo-media]')!.hidden = t === 'categories';
+		document.querySelector<HTMLElement>('[data-solo-media]')!.hidden = t === 'categories';
 	}
 
 	async function eliminar(t: TipoItem, id: string) {
