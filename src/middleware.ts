@@ -12,8 +12,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   try {
     const supabase = createServerClient(
-      import.meta.env.PUBLIC_SUPABASE_URL,
-      import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      // Runtime primero (.env del contenedor/servidor); build como respaldo.
+      process.env.PUBLIC_SUPABASE_URL ?? import.meta.env.PUBLIC_SUPABASE_URL,
+      process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY,
       {
         cookieOptions: { secure: true, sameSite: 'lax' },
         cookies: {
