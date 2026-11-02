@@ -1,0 +1,16 @@
+# Nunca dentro de la imagen
+node_modules/
+.git/
+.github/
+.env
+.env.*
+dist/
+.vercel/
+
+# No se usan para el runtime
+docs/
+*.md
+tests/
+supabase/
+playwright-report/
+test-results/

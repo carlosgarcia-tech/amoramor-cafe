@@ -152,18 +152,18 @@ import waffleImage from "../assets/bubbleWaffle.png";
 
 <script>
   (() => {
-    const section = document.getElementById("parallax-experience");
-    const product = document.getElementById("productWrap");
-    const shadow = document.getElementById("productShadow");
+    const section = document.getElementById("parallax-experience")!;
+    const product = document.getElementById("productWrap")!;
+    const shadow = document.getElementById("productShadow")!;
     const title = document.getElementById("productTitle");
     const subtitle = document.getElementById("productSubtitle");
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let ticking = false;
 
-    const clamp01 = (value) => Math.max(0, Math.min(1, value));
-    const lerp = (start, end, progress) => start + (end - start) * progress;
-    const smoothstep = (value) => value * value * (3 - 2 * value);
+    const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+    const lerp = (start: number, end: number, progress: number) => start + (end - start) * progress;
+    const smoothstep = (value: number) => value * value * (3 - 2 * value);
 
     function render() {
       ticking = false;
